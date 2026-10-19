@@ -20,6 +20,7 @@ import re
 import time
 import random
 import requests
+from datetime import datetime, timedelta
 
 # ---------------- 统一通知模块加载 ----------------
 hadsend = False
@@ -229,7 +230,9 @@ class HifiniCheckIn:
         if random_signin and self.total_accounts > 1:
             delay_seconds = random.randint(0, min(max_random_delay, 3600))
             if delay_seconds > 0:
+                signin_time = datetime.now() + timedelta(seconds=delay_seconds)
                 print(f"🎲 随机模式: 延迟 {format_time_remaining(delay_seconds)} 后开始")
+                print(f"⏰ 预计开始时间: {signin_time.strftime('%H:%M:%S')}")
                 wait_with_countdown(delay_seconds, "HiFiNi签到")
 
         print(f"📝 共发现 {len(self.cookies)} 个 HiFiTi 账号, {len(self.hifihi_cookies)} 个 HiFiHi 账号")

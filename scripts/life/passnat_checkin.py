@@ -17,7 +17,7 @@ import os
 import time
 import random
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # ---------------- 统一通知模块加载 ----------------
 hadsend = False
@@ -253,6 +253,7 @@ if __name__ == "__main__":
 
     # 生成签到计划
     signin_plan = []
+    plan_base_time = datetime.now()
     for i, sk in enumerate(key_list):
         account_index = i + 1
         delay = random.randint(0, max_random_delay) if random_signin else 0
@@ -260,6 +261,7 @@ if __name__ == "__main__":
             "index": account_index,
             "sk": sk,
             "delay": delay,
+            "signin_time": plan_base_time + timedelta(seconds=delay),
         })
 
     # 按延迟排序
@@ -268,7 +270,7 @@ if __name__ == "__main__":
         print("\n==== 签到计划 ====")
         for item in signin_plan:
             t = format_time_remaining(item["delay"])
-            print(f"  账号{item['index']}: 延迟 {t}")
+            print(f"  账号{item['index']}: 延迟 {t} (预计 {item['signin_time'].strftime('%H:%M:%S')} 签到)")
 
     # 执行签到
     print(f"\n{'='*50}")

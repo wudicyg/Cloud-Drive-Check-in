@@ -17,7 +17,7 @@ import re
 import requests
 import random
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # ---------------- 统一通知模块加载 ----------------
 hadsend = False
@@ -789,7 +789,9 @@ def main():
     if random_signin:
         delay_seconds = random.randint(0, max_random_delay)
         if delay_seconds > 0:
+            signin_time = datetime.now() + timedelta(seconds=delay_seconds)
             print(f"🎲 随机延迟: {format_time_remaining(delay_seconds)}")
+            print(f"⏰ 预计签到时间: {signin_time.strftime('%H:%M:%S')}")
             wait_with_countdown(delay_seconds, "恩山论坛签到")
 
     # 获取Cookie配置

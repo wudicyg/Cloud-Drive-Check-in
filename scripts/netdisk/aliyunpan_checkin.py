@@ -784,6 +784,7 @@ def main():
         if delay_seconds > 0:
             signin_time = datetime.now() + timedelta(seconds=delay_seconds)
             print(f"🎲 随机延迟: {format_time_remaining(delay_seconds)}")
+            print(f"⏰ 预计签到时间: {signin_time.strftime('%H:%M:%S')}")
             wait_with_countdown(delay_seconds, "阿里云盘签到")
     
     # 获取refresh_token配置

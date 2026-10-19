@@ -409,7 +409,7 @@ def main():
         })    
     schedule.sort(key=lambda x: x["delay"])    
         
-    if RANDOM_SIGNIN and len(cookie_list) > 1:    
+    if RANDOM_SIGNIN:
         print("\n==== 签到执行顺序 ====")    
         for it in schedule:    
             print(f"{it['name']}: 预计 {it['time'].strftime('%H:%M:%S')} 执行")    
