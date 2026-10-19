@@ -1,0 +1,117 @@
+[
+  {
+    "name": "ALIYUN_REFRESH_TOKEN",
+    "value": "待填写",
+    "remarks": "阿里云盘签到｜refresh_token(非Cookie)。获取:登录aliyundrive.com→F12→Local Storage→token→复制refresh_token。多账号换行分隔"
+  },
+  {
+    "name": "BAIDU_COOKIE",
+    "value": "待填写",
+    "remarks": "百度网盘签到｜整串Cookie(k1=v1; k2=v2)。获取:登录pan.baidu.com→F12→Network复制。多账号换行分隔"
+  },
+  {
+    "name": "QUARK_COOKIE",
+    "value": "待填写",
+    "remarks": "夸克网盘签到｜整串Cookie。获取:登录pan.quark.cn→F12复制。多账号换行或&&分隔"
+  },
+  {
+    "name": "TY_USERNAME",
+    "value": "待填写",
+    "remarks": "天翼云盘签到｜账号。与TY_PASSWORD用&分隔且按位置一一对应"
+  },
+  {
+    "name": "TY_PASSWORD",
+    "value": "待填写",
+    "remarks": "天翼云盘签到｜密码(脚本内RSA加密后登录)。与TY_USERNAME用&分隔且按位置一一对应"
+  },
+  {
+    "name": "sfsyUrl",
+    "value": "待填写",
+    "remarks": "顺丰速运签到｜App抓包URL中的token参数(变量名必须全小写)。多账号换行分隔"
+  },
+  {
+    "name": "CDRAIL_DATA",
+    "value": "待填写",
+    "remarks": "成都地铁签到｜App抓包。每行一个JSON:{\"token\":\"..\",\"app-token\":\"..\",\"Cookie\":\"..\"}，换行或@分隔多账号"
+  },
+  {
+    "name": "tsthbck",
+    "value": "待填写",
+    "remarks": "塔斯汀汉堡签到｜user-token(变量名必须全小写)。获取:微信小程序抓包sss-web.tastientech.com请求头。多账号换行分隔"
+  },
+  {
+    "name": "SMZDM_COOKIE",
+    "value": "待填写",
+    "remarks": "什么值得买签到｜整串Cookie。获取:登录smzdm.com→F12复制。多账号换行分隔"
+  },
+  {
+    "name": "enshan_cookie",
+    "value": "待填写",
+    "remarks": "恩山论坛签到｜整串Cookie(变量名必须全小写!)。获取:登录恩山论坛→F12复制。多账号换行或&&分隔"
+  },
+  {
+    "name": "TIEBA_COOKIE",
+    "value": "待填写",
+    "remarks": "百度贴吧签到｜整串Cookie(关键是BDUSS字段)。获取:登录tieba.baidu.com→F12复制。多账号换行分隔"
+  },
+  {
+    "name": "NGA_CREDENTIALS",
+    "value": "待填写",
+    "remarks": "NGA论坛签到｜每行格式:UID,AccessToken(逗号分隔)。获取:NGA个人设置页。多账号换行分隔"
+  },
+  {
+    "name": "HiFiTi_COOKIE",
+    "value": "待填写",
+    "remarks": "HiFiNi签到｜hifini.com整串Cookie(混合大小写变量名)。多账号换行分隔"
+  },
+  {
+    "name": "HIFIHI_COOKIE",
+    "value": "待填写",
+    "remarks": "HiFiNi签到｜hifi.hi网站Cookie(与HiFiTi_COOKIE分属两个站，可只配其一)。多账号换行分隔"
+  },
+  {
+    "name": "NODESEEK_COOKIE",
+    "value": "待填写",
+    "remarks": "NodeSeek签到｜整串Cookie。获取:登录nodeseek.com→F12复制。多账号换行或&分隔"
+  },
+  {
+    "name": "DEEPFLOOD_COOKIE",
+    "value": "待填写",
+    "remarks": "DeepFlood签到｜整串Cookie。多账号换行或&分隔。建议安装curl_cffi依赖以过Cloudflare风控"
+  },
+  {
+    "name": "PASSNAT_SK",
+    "value": "待填写",
+    "remarks": "PassNAT签到｜API密钥sk开头。获取:passnat账户后台。多账号换行分隔"
+  },
+  {
+    "name": "IKUUU_EMAIL",
+    "value": "待填写",
+    "remarks": "ikuuu签到｜注册邮箱。逗号或换行分隔，与IKUUU_PASSWD按位置一一对应"
+  },
+  {
+    "name": "IKUUU_PASSWD",
+    "value": "待填写",
+    "remarks": "ikuuu签到｜登录密码。逗号或换行分隔，与IKUUU_EMAIL按位置一一对应"
+  },
+  {
+    "name": "LEAFLOW_COOKIE",
+    "value": "待填写",
+    "remarks": "Leaflow签到｜新版控制台console.leaflow.net的Cookie(含leaflow_session/XSRF-TOKEN，旧PHPSESSID已失效)。多账号换行或&分隔"
+  },
+  {
+    "name": "RANDOM_SIGNIN",
+    "value": "true",
+    "remarks": "可选｜全局随机延迟开关。true=签到前随机等待最多MAX_RANDOM_DELAY秒降低风控；想准点跑改为false"
+  },
+  {
+    "name": "MAX_RANDOM_DELAY",
+    "value": "3600",
+    "remarks": "可选｜最大随机延迟秒数(默认3600=1小时)。调小时注意把青龙任务超时也同步调小"
+  },
+  {
+    "name": "PRIVACY_MODE",
+    "value": "true",
+    "remarks": "可选｜日志脱敏，不打印token明文(强烈建议保持true)"
+  }
+]

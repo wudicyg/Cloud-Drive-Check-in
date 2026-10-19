@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>青龙签到脚本 · 登录信息获取手册</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Microsoft YaHei","PingFang SC",sans-serif; background:#12141c; color:#e8eaf0; width:1080px; padding:36px 40px 28px; }
+  h1 { font-size:30px; letter-spacing:1px; }
+  h1 span { color:#4fc3f7; }
+  .sub { color:#8a93a6; font-size:14px; margin:8px 0 22px; }
+  .tips { background:#1a2233; border-left:4px solid #4fc3f7; border-radius:6px; padding:12px 16px; font-size:14px; line-height:1.8; margin-bottom:24px; color:#c3d3e8; }
+  .sec { margin-bottom:22px; }
+  .sec h2 { font-size:18px; color:#ffd166; padding-bottom:8px; border-bottom:1px solid #2a3040; margin-bottom:12px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .card { background:#1b1f2c; border:1px solid #2b3145; border-radius:10px; padding:14px 16px; }
+  .card.full { grid-column:1/-1; }
+  .name { font-family:Consolas,monospace; font-size:15px; color:#7ee787; font-weight:bold; }
+  .plat { font-size:13px; color:#9aa5bd; margin-left:8px; }
+  .warn { color:#ff7b72; font-size:12px; margin-left:6px; }
+  ol { margin:8px 0 0 20px; font-size:13.5px; line-height:1.75; color:#dbe2f0; }
+  p.desc { font-size:13.5px; line-height:1.75; color:#dbe2f0; margin-top:6px; }
+  code { font-family:Consolas,monospace; background:#2a3040; padding:1px 6px; border-radius:4px; font-size:12.5px; color:#a5d6ff; }
+  .foot { margin-top:20px; border-top:1px solid #2a3040; padding-top:12px; font-size:12.5px; color:#8a93a6; line-height:1.9; }
+</style>
+</head>
+<body>
+
+<h1>青龙签到脚本 <span>·</span> 登录信息获取手册</h1>
+<div class="sub">Cloud-Drive-Check-in ｜ 20 个凭证变量 ｜ 18 个平台</div>
+
+<div class="tips">
+  <b>Cookie 类通用步骤：</b>电脑浏览器登录目标网站 → <code>F12</code> → 「网络 / Network」→ 刷新页面 → 点任意一条目标域名请求 → 复制「请求标头」里 <code>cookie:</code> 冒号后的全部内容。<br>
+  <b>多账号：</b>每个账号各抓一份，同一变量内各占一行（换行分隔），值不要加引号。
+</div>
+
+<div class="sec">
+  <h2>☁️ 云盘类</h2>
+  <div class="grid">
+    <div class="card">
+      <span class="name">ALIYUN_REFRESH_TOKEN</span><span class="plat">阿里云盘</span><span class="warn">⚠ 不是 Cookie</span>
+      <ol>
+        <li>浏览器登录 <code>aliyundrive.com</code></li>
+        <li>F12 →「应用 / Application」→ 本地存储 → 选该域名</li>
+        <li>找键 <code>token</code>，从 JSON 里复制 <code>refresh_token</code> 长字符串</li>
+        <li>只贴字符串本身，不带 <code>Cookie:</code> 前缀</li>
+      </ol>
+    </div>
+    <div class="card">
+      <span class="name">BAIDU_COOKIE</span><span class="plat">百度网盘</span>
+      <p class="desc">登录 <code>pan.baidu.com</code> 后按通用步骤抓 Cookie。</p>
+    </div>
+    <div class="card">
+      <span class="name">QUARK_COOKIE</span><span class="plat">夸克网盘</span>
+      <p class="desc">登录 <code>pan.quark.cn</code> 后按通用步骤抓 Cookie。</p>
+    </div>
+    <div class="card">
+      <span class="name">TY_USERNAME / TY_PASSWORD</span><span class="plat">天翼云盘</span>
+      <p class="desc">免抓包，直接填 <code>cloud.189.cn</code> 的手机号 + 密码。多账号两变量用 <code>&</code> 分隔、按位置一一对应。</p>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>🚇 生活服务类</h2>
+  <div class="grid">
+    <div class="card">
+      <span class="name">sfsyUrl</span><span class="plat">顺丰速运</span><span class="warn">⚠ 变量名全小写</span>
+      <ol>
+        <li>手机配代理（Charles / Fiddler / HttpCanary）抓 <code>weixin.sf-express.com</code></li>
+        <li>任意请求 URL 里找 <code>token=</code> 参数（一长串含 URL 编码）</li>
+        <li>整段复制为变量值，多账号换行</li>
+      </ol>
+    </div>
+    <div class="card">
+      <span class="name">CDRAIL_DATA</span><span class="plat">成都地铁</span>
+      <ol>
+        <li>抓 App 包，域名 <code>scdcmtyzapp</code>，进"积分"页触发请求</li>
+        <li>从请求头取 <code>token</code>、<code>app-token</code>、<code>Cookie</code> 三个值</li>
+        <li>拼成一行 JSON：<code>{"token":"..","app-token":"..","Cookie":".."}</code>，多账号换行或 <code>@</code></li>
+      </ol>
+    </div>
+    <div class="card">
+      <span class="name">tsthbck</span><span class="plat">塔斯汀汉堡</span><span class="warn">⚠ 变量名全小写</span>
+      <ol>
+        <li>电脑微信小程序 + Charles/Fiddler 抓包</li>
+        <li>过滤域名 <code>sss-web.tastientech.com</code></li>
+        <li>复制请求头里 <code>user-token</code> 的值（不是整串 Cookie）</li>
+      </ol>
+    </div>
+    <div class="card">
+      <span class="name">SMZDM_COOKIE</span><span class="plat">什么值得买</span>
+      <p class="desc">登录 <code>www.smzdm.com</code> 后按通用步骤抓 Cookie。</p>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>💬 论坛 / 社区类</h2>
+  <div class="grid">
+    <div class="card">
+      <span class="name">enshan_cookie</span><span class="plat">恩山论坛</span><span class="warn">⚠ 变量名全小写</span>
+      <p class="desc">登录 <code>www.right.com.cn</code> 抓 Cookie，勾选"记住登录"延长有效期。</p>
+    </div>
+    <div class="card">
+      <span class="name">TIEBA_COOKIE</span><span class="plat">百度贴吧</span>
+      <p class="desc">登录 <code>tieba.baidu.com</code> 抓 Cookie，必须含 <code>BDUSS=</code> 字段；最少可只留 <code>BDUSS=..; STIN=..</code>。</p>
+    </div>
+    <div class="card">
+      <span class="name">NGA_CREDENTIALS</span><span class="plat">NGA 论坛</span>
+      <ol>
+        <li>登录 <code>bbs.nga.cn</code> → 设置 → 账号安全页</li>
+        <li>找到 <b>UID</b>（数字）与 <b>AccessToken</b>（授权码）</li>
+        <li>每行按 <code>UID,AccessToken</code> 格式填写（英文逗号）</li>
+      </ol>
+    </div>
+    <div class="card">
+      <span class="name">HiFiTi_COOKIE / HIFIHI_COOKIE</span><span class="plat">HiFiNi</span><span class="warn">⚠ 混合大小写</span>
+      <p class="desc">分别登录 <code>hifini.com</code> 与第二站点抓 Cookie，玩哪个站配哪个，两变量独立。</p>
+    </div>
+  </div>
+</div>
+
+<div class="sec">
+  <h2>🛜 NAT / 机场 / 节点类</h2>
+  <div class="grid">
+    <div class="card">
+      <span class="name">NODESEEK_COOKIE</span><span class="plat">NodeSeek</span>
+      <p class="desc">登录 <code>nodeseek.com</code> 抓 Cookie。Cloudflare 风控站，青龙需装 <code>curl_cffi</code>。</p>
+    </div>
+    <div class="card">
+      <span class="name">DEEPFLOOD_COOKIE</span><span class="plat">DeepFlood</span>
+      <p class="desc">登录论坛抓 Cookie。同为 Cloudflare 风控站，需 <code>curl_cffi</code>。</p>
+    </div>
+    <div class="card">
+      <span class="name">PASSNAT_SK</span><span class="plat">PassNAT</span>
+      <p class="desc">免抓包：登录 <code>passnat.com</code> 后台 →「API / 密钥」页 → 复制 <code>sk</code> 开头的密钥。</p>
+    </div>
+    <div class="card">
+      <span class="name">IKUUU_EMAIL / IKUUU_PASSWD</span><span class="plat">ikuuu</span>
+      <p class="desc">免抓包：控制台（ikuuu.nl / .de / .la）的注册邮箱 + 密码。多账号两变量各自换行、位置一一对应。</p>
+    </div>
+    <div class="card full">
+      <span class="name">LEAFLOW_COOKIE</span><span class="plat">Leaflow</span><span class="warn">⚠ 必须用新版控制台</span>
+      <p class="desc">登录 <code>console.leaflow.net</code> 抓 Cookie，确认含 <code>leaflow_session=</code> 和 <code>XSRF-TOKEN=</code> 字段；旧站 <code>checkin.leaflow.net</code> 的 PHPSESSID 已失效。</p>
+    </div>
+  </div>
+</div>
+
+<div class="foot">
+  🔒 Cookie / token / 密码等同账号密码，只填进青龙面板，勿外传、勿提交仓库　｜　🔄 报「登录失败 / 403」多为凭证过期，重抓替换即可（顺丰 / 塔斯汀 / 成都地铁掉线最快，账密类长期有效）　｜　⏸ 暂不玩的平台，把变量「禁用」脚本即自动跳过　｜　✅ 抓取前先确认浏览器处于登录态
+</div>
+
+</body>
+</html>

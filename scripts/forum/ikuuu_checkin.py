@@ -41,7 +41,8 @@ privacy_mode = os.getenv("PRIVACY_MODE", "true").lower() == "true"
 
 # ikuuu 域名配置（按顺序探测，域名失效时自动切换下一个）
 BASE_URLS = [
-    os.getenv("IKUUU_BASE", "https://ikuuu.nl").rstrip("/"),
+    os.getenv("IKUUU_BASE", "https://ikuuu.top").rstrip("/"),
+    "https://ikuuu.nl",
     "https://ikuuu.de",
     "https://ikuuu.la",
 ]
@@ -321,7 +322,7 @@ class IkuuuSigner:
 4. 密码顺序要与邮箱顺序对应
 
 💡 提示: 请确保邮箱和密码正确且一一对应
-🌐 当前候选域名: ikuuu.nl / ikuuu.de"""
+🌐 当前候选域名: ikuuu.top / ikuuu.nl / ikuuu.de / ikuuu.la"""
             
             print(f"❌ {error_msg}")
             return error_msg, False
@@ -385,7 +386,7 @@ IKUUU_EMAIL=user1@example.com,user2@example.com
 IKUUU_PASSWD=password1,password2
 
 💡 提示: 请确保邮箱和密码数量一致且顺序对应
-🌐 当前候选域名: ikuuu.nl / ikuuu.de"""
+🌐 当前候选域名: ikuuu.top / ikuuu.nl / ikuuu.de / ikuuu.la"""
         
         print(error_msg)
         notify_user("ikuuu签到失败", error_msg)
@@ -400,7 +401,7 @@ IKUUU_PASSWD=password1,password2
 
 🔧 解决方法:
 请确保IKUUU_EMAIL和IKUUU_PASSWD环境变量中的账号数量一致
-🌐 当前候选域名: ikuuu.nl / ikuuu.de"""
+🌐 当前候选域名: ikuuu.top / ikuuu.nl / ikuuu.de / ikuuu.la"""
         
         print(error_msg)
         notify_user("ikuuu签到失败", error_msg)
