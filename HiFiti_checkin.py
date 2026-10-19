@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
 """
- cron: 30 6 * * *
- new Env('HiFiNi签到')
- 来源: https://github.com/anduinnn/HiFiNi-Auto-CheckIn
- 支持 HiFiTi 和 HiFiHi 平台的自动签到、消息推送
+cron: 30 6 * * *
+new Env('HiFiNi签到')
+来源: https://github.com/anduinnn/HiFiNi-Auto-CheckIn
+支持 HiFiTi 和 HiFiHi 平台的自动签到、消息推送
 """
+
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 
 import os
 import re
@@ -89,16 +98,20 @@ class HifiniCheckIn:
         # 统计
         self.success_count = 0
         self.fail_count = 0
+        self.already_count = 0
         self.total_accounts = len(self.cookies) + len(self.hifihi_cookies)
 
     def parse_user_id(self, cookie):
         """从Cookie中提取用户ID"""
+        if not cookie:
+            return "unknown"
         match = re.search(r"cloudmusic\.net=([^;]+)", cookie)
         if match:
             return match.group(1)[:8]
         # 备用: 尝试从cookie值本身提取
-        if "=" in cookie:
-            value = cookie.split("=")[1].split(";")[0]
+        parts = cookie.split("=", 1)
+        if len(parts) > 1:
+            value = parts[1].split(";")[0].strip()
             if len(value) > 8:
                 return value[:8]
         return "unknown"
@@ -130,7 +143,7 @@ class HifiniCheckIn:
         try:
             cookie_value = cookie.split("=")[1].split(";")[0] if "=" in cookie else cookie
             self.session.cookies.set("cloudmusic.net", cookie_value)
-        except:
+        except Exception:
             pass
 
         # 先访问首页获取formhash
@@ -153,7 +166,7 @@ class HifiniCheckIn:
             if "签到成功" in response_text:
                 return True, "签到成功"
             elif "已签到" in response_text or "您今日签到已领取" in response_text:
-                return False, "今日已签到"
+                return None, "今日已签到"
             elif "签到失败" in response_text:
                 return False, "签到失败"
             else:
@@ -194,7 +207,7 @@ class HifiniCheckIn:
             if "签到成功" in response_text:
                 return True, "签到成功"
             elif "已签到" in response_text or "您今日签到已领取" in response_text:
-                return False, "今日已签到"
+                return None, "今日已签到"
             elif "签到失败" in response_text:
                 return False, "签到失败"
             else:
@@ -230,8 +243,10 @@ class HifiniCheckIn:
                 success, msg = self.sign_hifiti(cookie)
                 print(msg)
                 self.results.append(f"HiFiTi 账号{i+1}({user_id}): {msg}")
-                if success:
+                if success is True:
                     self.success_count += 1
+                elif success is None:
+                    self.already_count += 1
                 else:
                     self.fail_count += 1
                 # 账号间随机延迟
@@ -249,8 +264,10 @@ class HifiniCheckIn:
                 success, msg = self.sign_hifihi(cookie)
                 print(msg)
                 self.results.append(f"HiFiHi 账号{i+1}({user_id}): {msg}")
-                if success:
+                if success is True:
                     self.success_count += 1
+                elif success is None:
+                    self.already_count += 1
                 else:
                     self.fail_count += 1
                 # 账号间随机延迟
@@ -267,12 +284,12 @@ class HifiniCheckIn:
 
         # 发送通知
         if self.results:
-            summary_msg = f"成功: {self.success_count} / 失败: {self.fail_count}\n\n" + "\n".join([f"• {r}" for r in self.results])
+            summary_msg = f"成功: {self.success_count} | 已签: {self.already_count} | 失败: {self.fail_count}\n\n" + "\n".join([f"• {r}" for r in self.results])
             notify_user("HiFiNi 签到汇总", summary_msg)
 
         print("=" * 50)
         
-        # 返回状态码供青龙面板识别
+        # 返回状态码供青龙面板识别（已签到不算失败）
         return 0 if self.fail_count == 0 else 1
 
 

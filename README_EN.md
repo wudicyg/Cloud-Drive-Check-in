@@ -31,27 +31,40 @@ ql-script-hub/
 ├── LICENSE                      # License
 ├── aliyunpan_checkin.py         # Aliyun Drive check-in
 ├── baiduwangpan_checkin.py      # Baidu Netdisk check-in
+├── CDRail.py                    # Chengdu Metro sign-in
 ├── deepflood_checkin.py         # Deepflood check-in
 ├── enshan_checkin.py            # Enshan forum check-in
+├── HiFiti_checkin.py            # HiFiTi / HiFiHi check-in
 ├── ikuuu_checkin.py             # Ikuuu check-in
+├── leaflow_checkin.py           # Leaflow check-in
 ├── nga_checkin.py               # NGA forum check-in
 ├── nodeseek_checkin.py          # NodeSeek check-in
+├── passnat_checkin.py           # PassNAT check-in
 ├── quark_signin.py              # Quark Drive sign-in
-├── CDRail.py                    # Chengdu Metro sign-in
 ├── SFSU_checkin.py              # SF Express sign-in
 ├── SMZDM_checkin.py             # SMZDM sign-in
 ├── tieba_checkin.py             # Baidu Tieba sign-in
+├── tsthb_checkin.py             # Tastintin sign-in
 ├── ty_netdisk_checkin.py        # Tianyi Cloud Drive sign-in
-└── archive/
-    └── leaflow_checkin.pyleaflow_checkin.py
+└── archive/                     # Legacy versions (reference only, not scheduled)
 ```
 
 ## 🚀 Quick Start
 
 ### Requirements
 
-- QingLong Panel 2.10+
-- Node.js 14+
+- QingLong Panel 2.10+ (the panel itself is Node.js based; scripts run on the panel's built-in Python 3)
+- All scripts only require `requests` (bundled with QingLong); no extra setup needed
+- Optional dependency: `curl_cffi` (TLS impersonation for nodeseek / deepflood / leaflow; falls back to plain `requests` when missing)
+
+### Optional dependency (QingLong Panel → Dependencies → Add Python3 dependency)
+
+```
+curl_cffi
+```
+
+> Note: without `curl_cffi` the scripts still run; however, sites with Cloudflare TLS
+> fingerprint checks (e.g. deepflood) may reject plain requests and the check-in will fail.
 
 ### Installation
 
@@ -182,13 +195,18 @@ export CDRAIL_DATA='{"token":"t1","app-token":"a1","Cookie":"c1","deviceId":"d1"
 | Variable | Description | Required | Example | Notes |
 |--------|------|----------|--------|------|
 | `DEEPFLOOD_COOKIE` | Deepflood website cookie | **Required** | `cookie1\ncookie2\ncookie3` | Separate multiple accounts with new lines |
-| `NS_RANDOM` | Random sign-in parameter | Optional | `true` | Usually no need to change |
+| `DF_RANDOM` / `NS_RANDOM` | Random sign-in parameter | Optional | `true` | Usually no need to change; both variable names are accepted |
 
 #### ☁️ Leaflow
 
 | Variable | Description | Required | Example | Notes |
 |--------|------|----------|--------|------|
 | `LEAFLOW_COOKIE` | Leaflow website cookie | **Required** | `cookie` | Separate multiple accounts with new lines |
+| `LEAFLOW_BASE` | Custom site URL | Optional | `https://checkin.leaflow.net` | Tries `checkin.leaflow.net` then `console.leaflow.net` by default |
+
+> ⚠️ Leaflow has migrated: the old check-in site `checkin.leaflow.net` now redirects to the
+> new console at `console.leaflow.net`. If you keep seeing "Cookie expired / all retries failed",
+> log in again and copy the **new console cookie** from your browser dev tools.
 
 #### ⏰ Randomization Settings (shared by all scripts)
 
@@ -269,12 +287,11 @@ export CDRAIL_DATA='{"token":"t1","app-token":"a1","Cookie":"c1","deviceId":"d1"
 3. Add `TY_PASSWD` in QingLong Panel
 
 #### Leaflow configuration
-1. Visit [leaflow](https://leaflow.net/workspaces) and disable device lock
-2. Click the trial sign-in entry
-3. Open developer tools with `F12` and go to the network panel
-4. Click sign in
-5. Inspect the newly generated request
-6. Find the cookie value containing `PHPSESSID=XXXXX`
+1. Visit [leaflow](https://console.leaflow.net/) and sign in
+2. Open developer tools with `F12` → Network → refresh the page
+3. Copy the full `Cookie` header from any authenticated request (the new console uses session
+   cookies such as `leaflow_session` / `XSRF-TOKEN`; the old `PHPSESSID`-based site has been retired)
+4. Store it in `LEAFLOW_COOKIE`
 
 #### NGA forum configuration
 1. Install a packet capture tool with HTTPS decryption enabled and trust its certificate. Android: HTTP Canary, HttpToolkit, mitmproxy, Charles; iOS: Stream, Charles

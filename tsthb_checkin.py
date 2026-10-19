@@ -13,6 +13,15 @@ cron: 55 9 * * *
 const $ = new Env("塔斯汀汉堡");
 """
 
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 import requests
 import re
 import os

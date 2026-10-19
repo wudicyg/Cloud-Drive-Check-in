@@ -5,6 +5,15 @@ cron "1 0 * * *" script-path=xxx.py,tag=匹配cron用
 new Env('百度贴吧签到')
 """
 
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 import hashlib
 import json
 import os
@@ -78,9 +87,9 @@ class Tieba:
 
     def __init__(self, cookie: str, index: int = 1):
         self.index = index
-        self.TBS_URL = "http://tieba.baidu.com/dc/common/tbs"
-        self.LIKE_URL = "http://c.tieba.baidu.com/c/f/forum/like"
-        self.SIGN_URL = "http://c.tieba.baidu.com/c/c/forum/sign"
+        self.TBS_URL = "https://tieba.baidu.com/dc/common/tbs"
+        self.LIKE_URL = "https://c.tieba.baidu.com/c/f/forum/like"
+        self.SIGN_URL = "https://c.tieba.baidu.com/c/c/forum/sign"
         self.SIGN_KEY = "tiebaclient!!!"
 
         self.HEADERS = {

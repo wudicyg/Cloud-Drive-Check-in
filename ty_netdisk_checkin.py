@@ -6,6 +6,15 @@ new Env('天翼云盘签到')
 改编自作者：https://www.52pojie.cn/thread-1231190-1-1.html
 """
 
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 import time
 import re
 import json
@@ -13,11 +22,70 @@ import base64
 import hashlib
 import urllib.parse
 import hmac
-import rsa
+import os
 import requests
 import random
-import os
 from datetime import datetime, timedelta
+
+# ---------------- RSA 加密支持 ----------------
+# 优先使用 rsa 库；青龙等环境未安装 rsa 时自动回退到纯标准库实现（无额外依赖）
+try:
+    import rsa as _rsa_lib
+except ImportError:
+    _rsa_lib = None
+
+def _der_read_len(data, i):
+    """读取 ASN.1 DER 长度字段，返回 (长度, 新偏移)"""
+    b = data[i]
+    i += 1
+    if b < 0x80:
+        return b, i
+    nbytes = b & 0x7F
+    length = 0
+    for _ in range(nbytes):
+        length = (length << 8) | data[i]
+        i += 1
+    return length, i
+
+def _parse_spki(der):
+    """解析 X.509 SubjectPublicKeyInfo，返回 (n, e)"""
+    i = 0
+    assert der[i] == 0x30, "非法的公钥结构(外层非SEQUENCE)"
+    i += 1
+    _, i = _der_read_len(der, i)
+    assert der[i] == 0x30, "非法的公钥结构(缺少算法标识)"
+    alen, i = _der_read_len(der, i + 1)
+    i += alen
+    assert der[i] == 0x03, "非法的公钥结构(缺少BIT STRING)"
+    blen, i = _der_read_len(der, i + 1)
+    i += 1  # 跳过未使用位数字节
+    inner = der[i:i + blen - 1]
+    assert inner[0] == 0x30, "非法的公钥结构(RSAPublicKey非SEQUENCE)"
+    j = 1
+    _, j = _der_read_len(inner, j)
+    assert inner[j] == 0x02, "非法的公钥结构(缺少模数)"
+    nlen, j = _der_read_len(inner, j + 1)
+    n = int.from_bytes(inner[j:j + nlen], "big")
+    j += nlen
+    assert inner[j] == 0x02, "非法的公钥结构(缺少公指数)"
+    elen, j = _der_read_len(inner, j + 1)
+    e = int.from_bytes(inner[j:j + elen], "big")
+    return n, e
+
+def _stdlib_rsa_encrypt(j_rsakey, plaintext):
+    """纯标准库实现 PKCS#1 v1.5 加密（与 rsa.encrypt 行为一致）"""
+    n, e = _parse_spki(base64.b64decode(j_rsakey))
+    k = (n.bit_length() + 7) // 8
+    msg = plaintext if isinstance(plaintext, bytes) else plaintext.encode()
+    ps_len = k - len(msg) - 3
+    if ps_len < 8:
+        raise ValueError("明文过长，无法用该公钥加密")
+    ps = bytearray()
+    while len(ps) < ps_len:
+        ps.extend(b for b in os.urandom(ps_len) if b != 0)
+    em = b"\x00\x02" + bytes(ps[:ps_len]) + b"\x00" + msg
+    c = pow(int.from_bytes(em, "big"), e, n)
+    return base64.b64encode(c.to_bytes(k, "big")).decode()
 
 # ---------------- 统一通知模块加载 ----------------
 hadsend = False
@@ -120,10 +188,16 @@ class TianYiYunPan:
         return d
 
     def rsa_encode(self, j_rsakey, string):
-        rsa_key = f"-----BEGIN PUBLIC KEY-----\n{j_rsakey}\n-----END PUBLIC KEY-----"
-        pubkey = rsa.PublicKey.load_pkcs1_openssl_pem(rsa_key.encode())
-        result = self.b64tohex((base64.b64encode(rsa.encrypt(f'{string}'.encode(), pubkey))).decode())
-        return result
+        # 优先使用 rsa 库；未安装或加载失败时使用纯标准库回退实现
+        if _rsa_lib is not None:
+            try:
+                rsa_key = f"-----BEGIN PUBLIC KEY-----\n{j_rsakey}\n-----END PUBLIC KEY-----"
+                pubkey = _rsa_lib.PublicKey.load_pkcs1_openssl_pem(rsa_key.encode())
+                result = self.b64tohex((base64.b64encode(_rsa_lib.encrypt(f'{string}'.encode(), pubkey))).decode())
+                return result
+            except Exception as e:
+                print(f"⚠️ rsa 库加密失败，改用标准库实现: {e}")
+        return self.b64tohex(_stdlib_rsa_encrypt(j_rsakey, f'{string}'))
 
     def login(self):
         """登录天翼云盘：兼容 2026 新版 wap 登录页"""

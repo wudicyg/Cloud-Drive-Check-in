@@ -4,6 +4,15 @@
 cron "9 15 * * *" script-path=xxx.py,tag=匹配cron用
 new Env('顺丰速运签到')
 """
+
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 """
 顺丰速运自动化脚本
 来源:
@@ -129,6 +138,11 @@ class RUN:
         self.max_level = 8
         self.packet_threshold = 1 << (self.max_level - 1)
 
+        # 账号标识默认值（登录异常时保持空串，避免后续流程属性不存在）
+        self.user_id = ''
+        self.phone = ''
+        self.mobile = ''
+
         self.login_res = self.login(url)
 
     def get_deviceId(self, characters='abcdef0123456789'):
@@ -203,9 +217,10 @@ class RUN:
         url = 'https://mcs-mimp-web.sf-express.com/mcs-mimp/commonPost/~memberNonactivity~integralTaskSignPlusService~automaticSignFetchPackage'
         response = self.do_request(url, data=json_data)
         if response.get('success'):
-            count_day = response.get('obj', {}).get('countDay', 0)
-            if response.get('obj', {}).get('integralTaskSignPackageVOList'):
-                packet_name = response["obj"]["integralTaskSignPackageVOList"][0]["packetName"]
+            obj = response.get('obj') or {}
+            count_day = obj.get('countDay', 0)
+            if obj.get('integralTaskSignPackageVOList'):
+                packet_name = obj["integralTaskSignPackageVOList"][0].get("packetName", "未知奖励")
                 Log(f'✨ 签到成功，获得【{packet_name}】，本周累计签到【{count_day + 1}】天')
             else:
                 Log(f'📝 今日已签到，本周累计签到【{count_day + 1}】天')
@@ -219,21 +234,25 @@ class RUN:
         url = 'https://mcs-mimp-web.sf-express.com/mcs-mimp/commonPost/~memberNonactivity~integralTaskStrategyService~queryPointTaskAndSignFromES'
         response = self.do_request(url, data=json_data)
         if response.get('success') and response.get('obj'):
-            totalPoint = response["obj"]["totalPoint"]
+            obj = response.get('obj') or {}
+            totalPoint = obj.get('totalPoint', '未知')
             Log(f'💰 {"执行前" if not end else "当前"}积分：【{totalPoint}】')
             if not end:
-                for task in response["obj"]["taskTitleLevels"]:
-                    self.taskId = task["taskId"]
-                    self.taskCode = task["taskCode"]
-                    self.strategyId = task["strategyId"]
-                    self.title = task["title"]
-                    status = task["status"]
+                for task in obj.get('taskTitleLevels', []):
+                    self.taskId = task.get("taskId")
+                    self.taskCode = task.get("taskCode")
+                    self.strategyId = task.get("strategyId")
+                    self.title = task.get("title", "未知任务")
+                    status = task.get("status")
                     skip_title = ['用行业模板寄件下单', '去新增一个收件偏好', '参与积分活动']
                     if status == 3:
                         Log(f'✨ {self.title}-已完成')
                         continue
                     if self.title in skip_title:
                         Log(f'⏭️ {self.title}-跳过')
+                        continue
+                    if not self.taskCode:
+                        Log(f'⏭️ {self.title}-缺少taskCode，跳过')
                         continue
                     self.doTask()
                     time.sleep(2)
@@ -321,9 +340,9 @@ class RUN:
         url = 'https://mcs-mimp-web.sf-express.com/mcs-mimp/commonPost/~memberNonactivity~receiveExchangeIndexService~taskDetail'
         response = self.do_request(url, data={})
         if response.get('success'):
-            for item in response["obj"]["list"]:
-                self.taskType = item["taskType"]
-                status = item["status"]
+            for item in (response.get('obj') or {}).get('list', []):
+                self.taskType = item.get("taskType", "未知任务")
+                status = item.get("status")
                 if status == 3:
                     Log(f'✨ 【{self.taskType}】-已完成')
                     continue
@@ -347,7 +366,7 @@ class RUN:
             url = 'https://mcs-mimp-web.sf-express.com/mcs-mimp/commonPost/~memberNonactivity~receiveExchangeGameService~gameReport'
             response = self.do_request(url, data=json_data)
             if response.get('success'):
-                gameNum = response.get('obj')['gameNum']
+                gameNum = (response.get('obj') or {}).get('gameNum', gameNum)
                 Log(f'> 大冒险成功！剩余次数【{gameNum}】')
                 time.sleep(2)
             elif response.get("errorMessage") == '容量不足':
@@ -367,21 +386,27 @@ class RUN:
         else:
             Log(f'> 扩容失败！【{response.get("errorMessage", "未知错误")}】')
 
+    def _pick_invite(self):
+        """安全地选择一个邀请用户ID（邀请列表为空或仅含自己时返回空串）"""
+        candidates = [invite for invite in inviteId if invite and invite != self.user_id]
+        return random.choice(candidates) if candidates else ""
+
     def honey_indexData(self, end=False):
         """执行采蜜换大礼任务"""
         Log('🍯 开始执行采蜜换大礼任务' if not end else '🍯 查询最终丰蜜')
-        random_invite = random.choice([invite for invite in inviteId if invite != self.user_id])
+        random_invite = self._pick_invite()
         self.headers['channel'] = 'wxwdsj'
-        json_data = {"inviteUserId": random_invite}
+        json_data = {"inviteUserId": random_invite} if random_invite else {}
         url = 'https://mcs-mimp-web.sf-express.com/mcs-mimp/commonPost/~memberNonactivity~receiveExchangeIndexService~indexData'
         response = self.do_request(url, data=json_data)
         if response.get('success'):
-            usableHoney = response.get('obj').get('usableHoney')
-            activityEndTime = response.get('obj').get('activityEndTime', '')
+            obj = response.get('obj') or {}
+            usableHoney = obj.get('usableHoney', '未知')
+            activityEndTime = obj.get('activityEndTime', '')
             if not end:
                 Log(f'📅 本期活动结束时间【{activityEndTime}】')
                 Log(f'🍯 执行前丰蜜：【{usableHoney}】')
-                for task in response.get('obj').get('taskDetail', []):
+                for task in obj.get('taskDetail', []):
                     self.taskType = task['type']
                     self.receive_honeyTask()
                     time.sleep(2)
@@ -391,13 +416,14 @@ class RUN:
     def member_day_index(self):
         """执行会员日活动"""
         Log('🎭 会员日活动')
-        invite_user_id = random.choice([invite for invite in inviteId if invite != self.user_id])
-        payload = {'inviteUserId': invite_user_id}
+        invite_user_id = self._pick_invite()
+        payload = {'inviteUserId': invite_user_id} if invite_user_id else {}
         url = 'https://mcs-mimp-web.sf-express.com/mcs-mimp/commonPost/~memberNonactivity~memberDayIndexService~index'
         response = self.do_request(url, data=payload)
         if response.get('success'):
-            lottery_num = response.get('obj', {}).get('lotteryNum', 0)
-            can_receive_invite_award = response.get('obj', {}).get('canReceiveInviteAward', False)
+            obj = response.get('obj') or {}
+            lottery_num = obj.get('lotteryNum', 0)
+            can_receive_invite_award = obj.get('canReceiveInviteAward', False)
             if can_receive_invite_award:
                 self.member_day_receive_invite_award(invite_user_id)
             self.member_day_red_packet_status()
@@ -452,18 +478,18 @@ class RUN:
         url = 'https://mcs-mimp-web.sf-express.com/mcs-mimp/commonPost/~memberNonactivity~activityTaskService~taskList'
         response = self.do_request(url, data=payload)
         if response.get('success'):
-            task_list = response.get('obj', [])
+            task_list = response.get('obj') or []
             for task in task_list:
-                if task['status'] == 1:
+                if task.get('status') == 1:
                     if self.member_day_black:
                         return
                     self.member_day_fetch_mix_task_reward(task)
-                elif task['status'] == 2 and task['taskType'] not in [
+                elif task.get('status') == 2 and task.get('taskType') not in [
                     'SEND_SUCCESS', 'INVITEFRIENDS_PARTAKE_ACTIVITY', 'OPEN_SVIP',
                     'OPEN_NEW_EXPRESS_CARD', 'OPEN_FAMILY_CARD', 'CHARGE_NEW_EXPRESS_CARD', 
                     'INTEGRAL_EXCHANGE', 'OPEN_SUPER_CARD'  # 添加购买至尊会员到跳过列表
                 ]:
-                    for _ in range(task['restFinishTime']):
+                    for _ in range(task.get('restFinishTime', 0) or 0):
                         if self.member_day_black:
                             return
                         self.member_day_finish_task(task)
@@ -519,7 +545,11 @@ class RUN:
     def member_day_fetch_mix_task_reward(self, task):
         """领取会员日任务奖励"""
         task_name = task.get("taskName", "未知任务")
-        payload = {'taskType': task['taskType'], 'activityCode': 'MEMBER_DAY', 'channelType': 'MINI_PROGRAM'}
+        task_type = task.get('taskType')
+        if not task_type:
+            Log(f'📝 任务[{task_name}]缺少 taskType，跳过领奖')
+            return
+        payload = {'taskType': task_type, 'activityCode': 'MEMBER_DAY', 'channelType': 'MINI_PROGRAM'}
         url = 'https://mcs-mimp-web.sf-express.com/mcs-mimp/commonPost/~memberNonactivity~activityTaskService~fetchMixTaskReward'
         response = self.do_request(url, data=payload)
         
@@ -541,8 +571,11 @@ class RUN:
         url = 'https://mcs-mimp-web.sf-express.com/mcs-mimp/commonPost/~memberNonactivity~memberDayPacketService~redPacketStatus'
         response = self.do_request(url, data={})
         if response.get('success'):
-            packet_list = response.get('obj', {}).get('packetList', [])
-            self.member_day_red_packet_map = {packet['level']: packet['count'] for packet in packet_list}
+            packet_list = (response.get('obj') or {}).get('packetList', [])
+            self.member_day_red_packet_map = {
+                packet.get('level'): packet.get('count', 0)
+                for packet in packet_list if packet.get('level') is not None
+            }
             for level in range(1, self.max_level):
                 count = self.member_day_red_packet_map.get(level, 0)
                 while count >= 2:
@@ -670,12 +703,20 @@ if __name__ == '__main__':
             wait_with_countdown(delay_seconds, "顺丰签到")
     
     token = os.getenv(ENV_NAME)
-    tokens = token.split('\n') if token else []
+    tokens = [t.strip() for t in token.split('\n') if t.strip()] if token else []
     if tokens:
         Log(f"🚚 共获取到{len(tokens)}个账号")
         for index, infos in enumerate(tokens):
             Log(f"==================================\n🚚 处理账号{index + 1}")
-            RUN(infos, index).main()
+            try:
+                RUN(infos, index).main()
+            except Exception as e:
+                # 单账号异常不影响后续账号
+                Log(f'❌ 账号{index + 1}执行异常: {str(e)}')
+                try:
+                    send(f'顺丰速运账号{index + 1}执行异常', f'账号{index + 1}执行异常: {str(e)}')
+                except Exception:
+                    pass
             
             # 多账号间随机等待
             if index < len(tokens) - 1:  # 不是最后一个账号

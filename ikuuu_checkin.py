@@ -9,6 +9,15 @@ new Env('ikuuu签到')
 感谢原作者的贡献！
 """
 
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 import os
 import requests
 import json
@@ -34,15 +43,17 @@ max_random_delay = int(os.getenv("MAX_RANDOM_DELAY", "3600"))
 random_signin = os.getenv("RANDOM_SIGNIN", "true").lower() == "true"
 privacy_mode = os.getenv("PRIVACY_MODE", "true").lower() == "true"
 
-# ikuuu.nl 域名配置
-BASE_URL = 'https://ikuuu.nl'
-LOGIN_URL = f'{BASE_URL}/auth/login'
-CHECK_URL = f'{BASE_URL}/user/checkin'
+# ikuuu 域名配置（按顺序探测，域名失效时自动切换下一个）
+BASE_URLS = [
+    os.getenv("IKUUU_BASE", "https://ikuuu.nl").rstrip("/"),
+    "https://ikuuu.de",
+    "https://ikuuu.la",
+]
+LOGIN_URL = '/auth/login'
+CHECK_URL = '/user/checkin'
 
 HEADER = {
-    'origin': BASE_URL,
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-    'referer': f'{BASE_URL}/user',
     'accept': 'application/json, text/plain, */*',
     'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
     'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -103,65 +114,97 @@ def notify_user(title, content):
 class IkuuuSigner:
     name = "ikuuu"
 
-    def __init__(self, email: str, passwd: str, index: int = 1):
+    def __init__(self, email: str, passwd: str, index: int = 1, base_url: str = ""):
         self.email = email
         self.passwd = passwd
         self.index = index
+        self.base = (base_url or BASE_URLS[0]).rstrip("/")
         self.session = requests.Session()
         self.session.headers.update(HEADER)
+        self._sync_base_headers()
+
+    def _sync_base_headers(self):
+        """根据当前域名同步 origin / referer 头"""
+        self.session.headers['origin'] = self.base
+        self.session.headers['referer'] = f'{self.base}/user'
+
+    def _switchable_base(self):
+        """返回去重后的可用域名候选列表，当前域名优先"""
+        bases = [self.base] + [b for b in BASE_URLS if b != self.base]
+        seen, result = set(), []
+        for b in bases:
+            if b not in seen:
+                seen.add(b)
+                result.append(b)
+        return result
+
+    def _probe_base(self):
+        """探测当前可用的域名，成功后固定使用"""
+        for base in self._switchable_base():
+            try:
+                resp = self.session.get(base + "/user", timeout=10, allow_redirects=True)
+                if resp.status_code in (200, 302, 401, 403):
+                    self.base = base
+                    return True
+            except Exception:
+                continue
+        return False
 
     def login(self):
-        """用户登录"""
-        try:
-            print(f"🔐 正在登录账号: {mask_email(self.email)}")
-            print(f"🌐 使用域名: {BASE_URL}")
-            
-            data = {
-                'email': self.email,
-                'passwd': self.passwd
-            }
-            
-            response = self.session.post(
-                url=LOGIN_URL, 
-                data=data, 
-                timeout=15
-            )
-            
-            print(f"🔍 登录响应状态码: {response.status_code}")
-            
-            if response.status_code == 200:
-                try:
-                    result = response.json()
-                    print(f"🔍 登录响应: {result}")
-                    
-                    if result.get('ret') == 1:
-                        print(f"✅ 登录成功: {result.get('msg', '登录成功')}")
-                        return True, "登录成功"
-                    else:
-                        error_msg = result.get('msg', '登录失败')
-                        print(f"❌ 登录失败: {error_msg}")
-                        return False, f"登录失败: {error_msg}"
-                        
-                except json.JSONDecodeError:
-                    print(f"❌ 登录响应格式错误: {response.text[:200]}")
-                    return False, "登录响应格式错误"
-            else:
-                error_msg = f"登录请求失败，状态码: {response.status_code}"
-                print(f"❌ {error_msg}")
-                return False, error_msg
+        """用户登录（域名失效时自动切换候选域名重试）"""
+        last_error = "登录失败"
+        for base in self._switchable_base():
+            try:
+                print(f"🔐 正在登录账号: {mask_email(self.email)}")
+                print(f"🌐 使用域名: {base}")
                 
-        except requests.exceptions.Timeout:
-            error_msg = "登录请求超时"
-            print(f"❌ {error_msg}")
-            return False, error_msg
-        except requests.exceptions.ConnectionError:
-            error_msg = "网络连接错误，请检查域名是否正确"
-            print(f"❌ {error_msg}")
-            return False, error_msg
-        except Exception as e:
-            error_msg = f"登录异常: {str(e)}"
-            print(f"❌ {error_msg}")
-            return False, error_msg
+                data = {
+                    'email': self.email,
+                    'passwd': self.passwd
+                }
+                
+                response = self.session.post(
+                    url=base + LOGIN_URL, 
+                    data=data, 
+                    timeout=15
+                )
+                
+                print(f"🔍 登录响应状态码: {response.status_code}")
+                
+                if response.status_code == 200:
+                    try:
+                        result = response.json()
+                        print(f"🔍 登录响应: {result}")
+                        
+                        if result.get('ret') == 1:
+                            print(f"✅ 登录成功: {result.get('msg', '登录成功')}")
+                            self.base = base
+                            self._sync_base_headers()
+                            return True, "登录成功"
+                        else:
+                            last_error = result.get('msg', '登录失败')
+                            print(f"❌ 登录失败: {last_error}")
+                            # 账号密码错误等确定性响应，不再切换域名
+                            return False, f"登录失败: {last_error}"
+                            
+                    except json.JSONDecodeError:
+                        print(f"❌ 登录响应格式错误: {response.text[:200]}")
+                        last_error = "登录响应格式错误"
+                else:
+                    last_error = f"登录请求失败，状态码: {response.status_code}"
+                    print(f"❌ {last_error}")
+                    
+            except requests.exceptions.Timeout:
+                last_error = "登录请求超时"
+                print(f"❌ {last_error}")
+            except requests.exceptions.ConnectionError:
+                last_error = f"域名 {base} 无法连接，尝试切换域名..."
+                print(f"❌ {last_error}")
+            except Exception as e:
+                last_error = f"登录异常: {str(e)}"
+                print(f"❌ {last_error}")
+        
+        return False, f"所有域名均无法登录（最后错误: {last_error}）"
 
     def checkin(self):
         """执行签到"""
@@ -169,7 +212,7 @@ class IkuuuSigner:
             print("📝 正在执行签到...")
             
             response = self.session.post(
-                url=CHECK_URL, 
+                url=self.base + CHECK_URL, 
                 timeout=15
             )
             
@@ -181,12 +224,13 @@ class IkuuuSigner:
                     print(f"🔍 签到响应: {result}")
                     
                     msg = result.get('msg', '签到完成')
+                    ret = result.get('ret')
                     
                     # 从签到响应中提取流量奖励信息
                     traffic_reward = self.extract_traffic_reward(msg, result)
                     
                     # 判断签到结果
-                    if result.get('ret') == 1:
+                    if ret == 1:
                         success_msg = f"签到成功"
                         if traffic_reward:
                             success_msg += f"，获得流量: {traffic_reward}"
@@ -194,9 +238,10 @@ class IkuuuSigner:
                             success_msg += f"，{msg}"
                         print(f"✅ {success_msg}")
                         return True, success_msg
-                    elif "已经签到" in msg or "already" in msg.lower() or result.get('ret') == 0:
+                    elif ("已经签到" in msg or "already" in msg.lower()
+                          or "已签到" in msg or "重复" in msg):
                         already_msg = f"今日已签到"
-                        if "已经签到" not in msg:
+                        if "已经签到" not in msg and "已签到" not in msg:
                             already_msg += f": {msg}"
                         print(f"📅 {already_msg}")
                         return True, already_msg
@@ -216,8 +261,8 @@ class IkuuuSigner:
             error_msg = "签到请求超时"
             print(f"❌ {error_msg}")
             return False, error_msg
-        except requests.exceptions.ConnectionError:
-            error_msg = "网络连接错误"
+        except requests.exceptions.ConnectionError as e:
+            error_msg = f"网络连接错误: {e}"
             print(f"❌ {error_msg}")
             return False, error_msg
         except Exception as e:
@@ -280,7 +325,7 @@ class IkuuuSigner:
 4. 密码顺序要与邮箱顺序对应
 
 💡 提示: 请确保邮箱和密码正确且一一对应
-🌐 当前域名: ikuuu.de"""
+🌐 当前候选域名: ikuuu.nl / ikuuu.de"""
             
             print(f"❌ {error_msg}")
             return error_msg, False
@@ -300,7 +345,7 @@ class IkuuuSigner:
         final_msg = f"""🌟 ikuuu签到结果
 
 👤 账号: {mask_email(self.email)}
-🌐 域名: ikuuu.de
+🌐 域名: {self.base}
 
 📝 签到: {checkin_msg}
 ⏰ 时间: {datetime.now().strftime('%m-%d %H:%M')}"""
@@ -311,7 +356,7 @@ class IkuuuSigner:
 def main():
     """主程序入口"""
     print(f"==== ikuuu签到开始 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ====")
-    print(f"🌐 当前域名: {BASE_URL}")
+    print(f"🌐 当前候选域名: {', '.join(BASE_URLS)}")
     
     # 显示配置状态
     print(f"🔒 隐私保护模式: {'已启用' if privacy_mode else '已禁用'}")
@@ -344,7 +389,7 @@ IKUUU_EMAIL=user1@example.com,user2@example.com
 IKUUU_PASSWD=password1,password2
 
 💡 提示: 请确保邮箱和密码数量一致且顺序对应
-🌐 当前域名: ikuuu.de"""
+🌐 当前候选域名: ikuuu.nl / ikuuu.de"""
         
         print(error_msg)
         notify_user("ikuuu签到失败", error_msg)
@@ -359,7 +404,7 @@ IKUUU_PASSWD=password1,password2
 
 🔧 解决方法:
 请确保IKUUU_EMAIL和IKUUU_PASSWD环境变量中的账号数量一致
-🌐 当前域名: ikuuu.de"""
+🌐 当前候选域名: ikuuu.nl / ikuuu.de"""
         
         print(error_msg)
         notify_user("ikuuu签到失败", error_msg)
@@ -370,6 +415,7 @@ IKUUU_PASSWD=password1,password2
     success_count = 0
     total_count = len(emails)
     results = []
+    used_base = BASE_URLS[0]
     
     for index, (email, passwd) in enumerate(zip(emails, passwords)):
         try:
@@ -382,6 +428,7 @@ IKUUU_PASSWD=password1,password2
             # 执行签到
             signer = IkuuuSigner(email, passwd, index + 1)
             result_msg, is_success = signer.main()
+            used_base = signer.base
             
             if is_success:
                 success_count += 1
@@ -411,7 +458,7 @@ IKUUU_PASSWD=password1,password2
 ✅ 成功: {success_count}个
 ❌ 失败: {total_count - success_count}个
 📊 成功率: {success_count/total_count*100:.1f}%
-🌐 域名: ikuuu.de
+🌐 域名: {used_base}
 ⏰ 完成时间: {datetime.now().strftime('%m-%d %H:%M')}"""
         
         # 添加详细结果（最多显示5个账号的详情）

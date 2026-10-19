@@ -26,31 +26,47 @@ QL Script Hub 是一个专为青龙面板打造的综合性脚本库，提供签
 
 ```
 ql-script-hub/
-├── README.md              # 项目说明文档
-├── LICENSE                # 开源许可证
-├── aliyunpan_signin.py    # 阿里云盘签到脚本
-├── baidu_signin.py        # 百度网盘签到
-├── enshan_checkin.py      # 恩山论坛签到脚本
-├── nodeseek_checkin.py    # nodeseek签到脚本
-├── ikuuu_checkin.py       # ikuuu签到
-├── nga_checkin.py         # NGA论坛签到
-├── ty_netdisk_checkin.py  # 天翼云盘签到
-├── quark_signin.py        # 夸克网盘签到脚本
-├── CDRail.py              # 成都地铁签到脚本
-├── SFSU_checkin.py        # 顺丰速运签到脚本
-├── smzdm_checkin.py       # 什么值得买签到脚本
-├── deepflood_checkin.py   # deepflood签到脚本
-├── leaflow_checkin.py     # leaflow签到脚本
-├── tieba_checkin.py       # 贴吧签到脚本
-└── tsthb_checkin.py       # 塔斯汀汉堡签到脚本
+├── README.md                  # 项目说明文档
+├── README_EN.md               # 英文文档
+├── LICENSE                    # 开源许可证
+├── aliyunpan_checkin.py       # 阿里云盘签到
+├── baiduwangpan_checkin.py    # 百度网盘签到
+├── CDRail.py                  # 成都地铁签到
+├── deepflood_checkin.py       # deepflood 签到
+├── enshan_checkin.py          # 恩山论坛签到
+├── HiFiti_checkin.py          # HiFiTi / HiFiHi 签到
+├── ikuuu_checkin.py           # ikuuu 签到
+├── leaflow_checkin.py         # leaflow 签到
+├── nga_checkin.py             # NGA 论坛签到
+├── nodeseek_checkin.py        # nodeseek 签到
+├── passnat_checkin.py         # PassNAT 签到
+├── quark_signin.py            # 夸克网盘签到
+├── SFSU_checkin.py            # 顺丰速运签到
+├── SMZDM_checkin.py           # 什么值得买签到
+├── tieba_checkin.py           # 百度贴吧签到
+├── tsthb_checkin.py           # 塔斯汀汉堡签到
+├── ty_netdisk_checkin.py      # 天翼云盘签到
+└── archive/                   # 历史版本存档（仅供参考，不参与运行）
 ```
 
 ## 🚀 快速开始
 
+> 📌 部署流程、各平台凭证获取方式、格式与安全注意事项，详见 **[DEPLOY.md](./DEPLOY.md)**。
+
 ### 环境要求
 
-- 青龙面板 2.10+
-- Node.js 14+
+- 青龙面板 2.10+（面板基于 Node.js，脚本为 Python 3，由面板内置 Python 环境执行）
+- 所有脚本仅依赖 `requests`（青龙默认自带），无需额外安装
+- 可选依赖：`curl_cffi`（nodeseek / deepflood / leaflow 的 TLS 指纹伪装，未安装时自动回退普通 requests）
+
+### 可选依赖安装（青龙面板 → 依赖管理 → 新建 Python3 依赖）
+
+```
+curl_cffi
+```
+
+> 说明：不安装 `curl_cffi` 时脚本仍可正常运行；但对启用了 Cloudflare TLS 指纹校验的站点
+> （如 deepflood），普通 requests 可能被拦截，签到会失败并提示风控。
 
 ### 安装步骤
 
@@ -122,6 +138,13 @@ export CDRAIL_DATA='{"token":"t1","app-token":"a1","Cookie":"c1","deviceId":"d1"
 {"token":"t2","app-token":"a2","Cookie":"c2","deviceId":"d2"}'
 ```
 
+可选变量：
+
+| 变量名          | 说明                 | 默认值 | 备注                       |
+| --------------- | -------------------- | ------ | -------------------------- |
+| `TIMEOUT`     | 单次请求超时（秒）   | `15` | 网络较慢时可适当调大       |
+| `MAX_RETRIES` | 5xx 错误自动重试次数 | `3`  | 指数退避重试               |
+
 #### 📦 顺丰速运签到配置
 
 | 变量名      | 说明            | 是否必需       | 示例值                  | 备注                 |
@@ -174,6 +197,9 @@ export CDRAIL_DATA='{"token":"t1","app-token":"a1","Cookie":"c1","deviceId":"d1"
 | ---------------- | -------- | -------------------- |
 | `IKUUU_EMAIL`  | 登录邮箱 | `user@example.com` |
 | `IKUUU_PASSWD` | 登录密码 | `password123`      |
+| `IKUUU_BASE`   | 自定义站点地址 | `https://ikuuu.nl` | 可选，默认按 `ikuuu.nl` → `ikuuu.de` → `ikuuu.la` 顺序自动探测可用域名 |
+
+> 说明：ikuuu 域名会不定期更换，脚本会自动探测候选域名，单个域名失效时自动切换。
 
 #### ☁️ 天翼云盘配置
 
@@ -187,19 +213,25 @@ export CDRAIL_DATA='{"token":"t1","app-token":"a1","Cookie":"c1","deviceId":"d1"
 | 变量名              | 说明            | 示例                   |
 | ------------------- | --------------- | ---------------------- |
 | `NGA_CREDENTIALS` | UID,AccessToken | `12345678,abcdef...` |
+| `NGA_UA`          | 自定义User-Agent | `Nga_Official/90409` | 可选，默认 `Nga_Official/90409` |
 
 #### 📱 deepflood签到配置
 
 | 变量名 | 说明 | 是否必需 | 示例值 | 备注 |
 |--------|------|----------|--------|------|
 | `DEEPFLOOD_COOKIE` | DEEPFLOOD网站Cookie | **必需** | `cookie1&cookie2&cookie3` | 多账号用`&`分隔 |
-| `NS_RANDOM` | 签到随机参数 | 可选 | `true` | 默认值，通常无需修改 |
+| `DF_RANDOM` / `NS_RANDOM` | 签到随机参数 | 可选 | `true` | 默认值，通常无需修改；两个变量名均兼容 |
 
 #### ☁ leaflow签到配置
 
 | 变量名             | 说明              | 是否必需       | 示例值     | 备注               |
 | ------------------ | ----------------- | -------------- | ---------- | ------------------ |
 | `LEAFLOW_COOKIE` | leaflow网站Cookie | **必需** | `cookie` | 多账号用换行分隔 |
+| `LEAFLOW_BASE` | 自定义站点地址 | 可选 | `https://checkin.leaflow.net` | 默认按 `checkin.leaflow.net` → `console.leaflow.net` 顺序自动尝试 |
+
+> ⚠️ **leaflow 已改版**：旧签到站 `checkin.leaflow.net` 现在会跳转到新版控制台 `console.leaflow.net`。
+> 若持续提示"Cookie 已失效/重试后失败"，请重新登录 leaflow，从浏览器开发者工具复制**新版控制台的 Cookie**
+> （需包含登录会话字段，如 `leaflow_session`、`XSRF-TOKEN` 等）后重试。
 
 #### 🌐 PassNAT签到配置
 
@@ -298,12 +330,11 @@ export CDRAIL_DATA='{"token":"t1","app-token":"a1","Cookie":"c1","deviceId":"d1"
 
 #### leaflow配置
 
-1. 浏览器访问 [leaflow](https://leaflow.net/workspaces) ，关闭设备锁
-2. 点击签到试用
-3. 在新弹出来的页面中按F12 网络
-4. 点击签到
-5. 观察F12 网络中新出现的链接
-6. 在新出现的请求中找到cookie值为PHPSESSID=XXXXX的一串
+1. 浏览器访问新版控制台 [console.leaflow.net](https://console.leaflow.net/) 并登录
+2. 按F12打开开发者工具 → Network → 刷新页面
+3. 复制任意已登录请求的完整 `Cookie`（新版控制台使用 `leaflow_session`、`XSRF-TOKEN` 等会话 Cookie；旧站基于 `PHPSESSID` 的获取方式已失效）
+4. 填入环境变量 `LEAFLOW_COOKIE`
+5. 如访问不稳定，可用 `LEAFLOW_BASE` 自定义站点地址
 
 #### PassNAT 接口密钥获取
 

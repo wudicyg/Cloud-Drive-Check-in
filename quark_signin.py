@@ -2,6 +2,15 @@
 cron "13 18 * * *" script-path=xxx.py,tag=匹配cron用
 new Env('夸克签到')
 """
+
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 import os
 import re
 import sys
@@ -87,6 +96,18 @@ class Quark:
     def __init__(self, cookie):
         self.cookie = cookie
 
+    def _get_json(self, url, headers, params=None, method="get", payload=None):
+        """带超时与容错的 JSON 请求"""
+        try:
+            if method == "get":
+                response = requests.get(url=url, headers=headers, params=params, timeout=15)
+            else:
+                response = requests.post(url=url, headers=headers, params=params, json=payload, timeout=15)
+            return response.json()
+        except Exception as e:
+            print(f"⚠️  请求失败: {url} -> {e}")
+            return None
+
     def get_growth_info(self):
         url = "https://drive-m.quark.cn/1/clouddrive/capacity/growth/info"
         querystring = {"pr": "ucpro", "fr": "pc", "uc_param_str": ""}
@@ -94,8 +115,8 @@ class Quark:
             "content-type": "application/json",
             "cookie": self.cookie
         }
-        response = requests.get(url=url, headers=headers, params=querystring).json()
-        if response.get("data"):
+        response = self._get_json(url, headers, querystring)
+        if response and response.get("data"):
             return response["data"]
         else:
             return False
@@ -108,11 +129,11 @@ class Quark:
             "content-type": "application/json",
             "cookie": self.cookie
         }
-        response = requests.post(url=url, json=payload, headers=headers, params=querystring).json()
-        if response.get("data"):
+        response = self._get_json(url, headers, querystring, method="post", payload=payload)
+        if response and response.get("data"):
             return True, response["data"]["sign_daily_reward"]
         else:
-            return False, response["message"]
+            return False, (response or {}).get("message", "请求失败或无响应")
 
     def get_account_info(self):
         url = "https://pan.quark.cn/account/info"
@@ -121,8 +142,8 @@ class Quark:
             "content-type": "application/json",
             "cookie": self.cookie
         }
-        response = requests.get(url=url, headers=headers, params=querystring).json()
-        if response.get("data"):
+        response = self._get_json(url, headers, querystring)
+        if response and response.get("data"):
             return response["data"]
         else:
             return False
@@ -134,18 +155,19 @@ class Quark:
         if not account_info:
             msg = f"\n❌该账号登录失败，cookie无效"
         else:
-            log = f" 昵称: {account_info['nickname']}"
+            log = f" 昵称: {account_info.get('nickname', '未知')}"
             msg += log + "\n"
             # 每日领空间
             growth_info = self.get_growth_info()
             if growth_info:
-                if growth_info["cap_sign"]["sign_daily"]:
-                    log = f"✅ 执行签到: 今日已签到+{int(growth_info['cap_sign']['sign_daily_reward'] / 1024 / 1024)}MB，连签进度({growth_info['cap_sign']['sign_progress']}/{growth_info['cap_sign']['sign_target']})"
+                cap_sign = growth_info.get("cap_sign") or {}
+                if cap_sign.get("sign_daily"):
+                    log = f"✅ 执行签到: 今日已签到+{int((cap_sign.get('sign_daily_reward') or 0) / 1024 / 1024)}MB，连签进度({cap_sign.get('sign_progress', 0)}/{cap_sign.get('sign_target', 0)})"
                     msg += log + "\n"
                 else:
                     sign, sign_return = self.get_growth_sign()
                     if sign:
-                        log = f"✅ 执行签到: 今日签到+{int(sign_return / 1024 / 1024)}MB，连签进度({growth_info['cap_sign']['sign_progress'] + 1}/{growth_info['cap_sign']['sign_target']})"
+                        log = f"✅ 执行签到: 今日签到+{int((sign_return or 0) / 1024 / 1024)}MB，连签进度({cap_sign.get('sign_progress', 0) + 1}/{cap_sign.get('sign_target', 0)})"
                         msg += log + "\n"
                     else:
                         msg += f"✅ 执行签到: {sign_return}\n"
@@ -165,8 +187,12 @@ def main():
         # 开始任务
         log = f"🙍🏻‍♂️ 第{i + 1}个账号"
         msg += log
-        # 登录
-        log = Quark(QUARK_COOKIE[i]).do_sign()
+        # 登录（单账号异常不中断整体流程）
+        try:
+            log = Quark(QUARK_COOKIE[i]).do_sign()
+        except Exception as e:
+            log = f"\n❌ 账号{i + 1}执行异常: {e}"
+            print(log)
         msg += log + "\n"
         
         # 多账号间随机等待

@@ -5,6 +5,15 @@ cron: 3 11 * * *
 new Env('阿里云盘签到')
 """
 
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 import json
 import os
 import requests
@@ -613,9 +622,9 @@ class AliYun:
                 try:
                     error_detail = response.json()
                     error_msg = error_detail.get("message", f"HTTP {response.status_code}")
-                except:
+                except Exception:
                     error_msg = f"签到请求失败，HTTP状态码: {response.status_code}"
-                return error_msg, False
+                return error_msg, False, ""
                 
             result = response.json()
             
@@ -623,7 +632,7 @@ class AliYun:
             if not result.get("success", False):
                 error_msg = result.get("message", "签到失败")
                 print(f"❌ 签到失败: {error_msg}")
-                return error_msg, False
+                return error_msg, False, ""
             
             sign_days = result.get("result", {}).get("signInCount", 0)
             print(f"📅 累计签到: {sign_days}天")

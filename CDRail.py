@@ -18,6 +18,15 @@ new Env('成都地铁签到')
 - requests
 """
 
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 import os
 import re
 import sys
@@ -133,28 +142,33 @@ def parse_accounts(env_value: str):
 
     env_value = env_value.strip()
 
-    # 单个 JSON（不按分隔符拆）
-    try:
-        if env_value.startswith("{") and env_value.endswith("}"):
+    def _parse_one(raw: str):
+        """解析单个账号：JSON 或 querystring"""
+        if raw.startswith("{") and raw.endswith("}"):
+            return json.loads(raw)  # 解析失败直接抛出，由调用方报错
+        data = {}
+        for part in raw.split("&"):
+            if "=" not in part:
+                continue
+            k, v = part.split("=", 1)
+            data[k.strip()] = v.strip()
+        if not data:
+            raise ValueError("querystring 格式为空或无效")
+        return data
+
+    # 整个值是单个 JSON 对象（不按分隔符拆）
+    if env_value.startswith("{") and env_value.endswith("}"):
+        try:
             return [json.loads(env_value)]
-    except json.JSONDecodeError:
-        pass
+        except json.JSONDecodeError as e:
+            print(f"❌ 单账号 JSON 解析失败: {e}")
+            return []
 
     accounts = []
     raw_list = [x.strip() for x in re.split(r"[\n@]", env_value) if x.strip()]
     for raw in raw_list:
         try:
-            if raw.startswith("{") and raw.endswith("}"):
-                accounts.append(json.loads(raw))
-                continue
-            data = {}
-            for part in raw.split("&"):
-                if "=" not in part:
-                    continue
-                k, v = part.split("=", 1)
-                data[k.strip()] = v.strip()
-            if data:
-                accounts.append(data)
+            accounts.append(_parse_one(raw))
         except Exception as e:
             print(f"❌ 账号解析失败: {raw[:20]}... {e}")
     return accounts
@@ -240,22 +254,26 @@ def main():
     success_count = 0
 
     for idx, account_data in enumerate(accounts, start=1):
-        headers = build_headers(account_data)
-        token_preview = mask_text(str(headers.get("token", "")), 6, 6)
-        print(f"\n==== 开始第{idx}个账号签到 ====")
-        if token_preview:
-            print(f"Token: {token_preview}")
+        try:
+            headers = build_headers(account_data)
+            token_preview = mask_text(str(headers.get("token", "")), 6, 6)
+            print(f"\n==== 开始第{idx}个账号签到 ====")
+            if token_preview:
+                print(f"Token: {token_preview}")
 
-        session = build_session()
-        status, info = cdrail_signin(session, headers)
-        session.close()
+            session = build_session()
+            status, info = cdrail_signin(session, headers)
+            session.close()
 
-        if status in ("success", "already"):
-            success_count += 1
-            prefix = "✅" if status == "success" else "🟡"
-            msg_lines.append(f"{prefix} 账号{idx}: {info}")
-        else:
-            msg_lines.append(f"❌ 账号{idx}: {info}")
+            if status in ("success", "already"):
+                success_count += 1
+                prefix = "✅" if status == "success" else "🟡"
+                msg_lines.append(f"{prefix} 账号{idx}: {info}")
+            else:
+                msg_lines.append(f"❌ 账号{idx}: {info}")
+        except Exception as e:
+            msg_lines.append(f"❌ 账号{idx}: 执行异常 - {e}")
+            print(f"❌ 账号{idx}: 执行异常 - {e}")
 
         if idx < len(accounts):
             time.sleep(random.uniform(3, 8))

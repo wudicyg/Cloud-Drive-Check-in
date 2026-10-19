@@ -3,6 +3,15 @@ cron "39 12 * * *" script-path=xxx.py,tag=匹配cron用
 new Env('恩山论坛签到')
 """
 
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 import os
 import re
 import requests
@@ -45,7 +54,8 @@ HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-    'Accept-Encoding': 'gzip, deflate, br',
+    # 不手动声明 Accept-Encoding：交给 requests 自动协商（gzip/deflate），
+    # 避免服务端返回 br 而运行环境缺少 brotli 导致响应内容无法解码
     'Connection': 'keep-alive',
     'Upgrade-Insecure-Requests': '1',
     'Cache-Control': 'max-age=0'
@@ -390,7 +400,6 @@ class EnShanSigner:
                 'text/html,application/xhtml+xml,application/xml;q=0.9,'
                 'image/avif,image/webp,image/apng,*/*;q=0.8'
             ),
-            'Accept-Encoding': 'gzip, deflate, br',
             'Pragma': 'no-cache',
             'Cache-Control': 'no-cache',
             'Accept-Language': 'zh-CN,zh;q=0.9',
@@ -643,7 +652,6 @@ class EnShanSigner:
                 "User-Agent": HEADERS["User-Agent"],
                 "Accept": "application/json, text/javascript, */*; q=0.01",
                 "Accept-Language": "zh-CN,zh;q=0.9",
-                "Accept-Encoding": "gzip, deflate, br",
                 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
                 "X-Requested-With": "XMLHttpRequest",
                 "Origin": "https://www.right.com.cn",

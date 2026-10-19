@@ -3,12 +3,31 @@
 cron "23 14 * * *" script-path=xxx.py,tag=匹配cron用
 new Env('nodeseek签到')
 """
+
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 import os
 import time
 import random
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from curl_cffi import requests
+
+# ---------------- HTTP 客户端加载 ----------------
+# 优先使用 curl_cffi（TLS 指纹伪装，可过 Cloudflare）；未安装时回退标准库 requests
+try:
+    from curl_cffi import requests
+    CURL_CFFI = True
+except ImportError:
+    import requests
+    CURL_CFFI = False
+    print("⚠️  未安装 curl_cffi，已回退为 requests（若站点有 Cloudflare 防护可能签到失败）")
+    print("💡 建议安装依赖: pip install curl_cffi")
 
 # ---------------- 通知模块动态加载 ----------------
 hadsend = False
@@ -18,6 +37,11 @@ try:
     hadsend = True
 except ImportError:
     print("未加载通知模块，跳过通知功能")
+
+# ---------------- 请求辅助 ----------------
+def _req_kwargs():
+    """curl_cffi 可用时附加浏览器 TLS 指纹伪装"""
+    return {"impersonate": "chrome110"} if CURL_CFFI else {}
 
 # ---------------- 签到逻辑 ----------------
 def sign(NODESEEK_COOKIE, ns_random):
@@ -33,7 +57,7 @@ def sign(NODESEEK_COOKIE, ns_random):
     }
     try:
         url = f"https://www.nodeseek.com/api/attendance?random={ns_random}"
-        response = requests.post(url, headers=headers, impersonate="chrome110")
+        response = requests.post(url, headers=headers, timeout=30, **_req_kwargs())
         data = response.json()
         msg = data.get("message", "")
         if "鸡腿" in msg or data.get("success"):
@@ -76,7 +100,7 @@ def get_signin_stats(NODESEEK_COOKIE, days=30):
         
         while page <= 10:  # 最多查询10页
             url = f"https://www.nodeseek.com/api/account/credit/page-{page}"
-            response = requests.get(url, headers=headers, impersonate="chrome110")
+            response = requests.get(url, headers=headers, timeout=30, **_req_kwargs())
             data = response.json()
             
             if not data.get("success") or not data.get("data"):

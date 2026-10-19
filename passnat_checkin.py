@@ -4,6 +4,15 @@ cron "18 0 * * *" script-path=passnat_checkin.py,tag=匹配cron用
 new Env('PassNAT签到')
 """
 
+# ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 import os
 import time
 import random
