@@ -234,6 +234,13 @@ class HifiniCheckIn:
 
         print(f"📝 共发现 {len(self.cookies)} 个 HiFiTi 账号, {len(self.hifihi_cookies)} 个 HiFiHi 账号")
 
+        # 两个变量均未配置时给出明确提示并退出
+        if self.total_accounts == 0:
+            error_msg = "❌ 未找到HiFiTi_COOKIE或HIFIHI_COOKIE环境变量（或值为空），请在青龙面板中配置Cookie（多账号用换行分隔）"
+            print(error_msg)
+            notify_user("HiFiNi 签到失败", error_msg)
+            return 1
+
         # HiFiTi 签到
         if self.cookies:
             print("\n[HiFiTi] 开始签到...")

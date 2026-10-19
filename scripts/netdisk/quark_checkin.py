@@ -84,6 +84,12 @@ def get_env():
     if "QUARK_COOKIE" in os.environ:
         # 读取系统变量以 \n 或 && 分割变量
         cookie_list = re.split('\n|&&',os.environ.get('QUARK_COOKIE') ) #os.environ.get('QUARK_COOKIE')
+        cookie_list = [c.strip() for c in cookie_list if c.strip()]
+        if not cookie_list:
+            # 标准日志输出
+            print('❌ QUARK_COOKIE变量值为空，请在青龙面板中配置夸克Cookie（多账号用换行或&&分隔）')
+            # 脚本退出
+            sys.exit(0)
     else:
         # 标准日志输出
         print('❌未添加QUARK_COOKIE变量')
@@ -91,6 +97,16 @@ def get_env():
         sys.exit(0)
 
     return cookie_list
+
+def check_cookie_format(cookie, index):
+    """cookie 格式预校验：HTTP 请求头仅允许 latin-1 字符，含中文时提前给出明确提示"""
+    try:
+        cookie.encode('latin-1')
+        return True
+    except UnicodeEncodeError:
+        bad_chars = ''.join(sorted({ch for ch in cookie if ord(ch) > 255}))[:10]
+        print(f"❌ 账号{index}: cookie格式无效，包含中文/非ASCII字符（如: {bad_chars}），请重新从浏览器复制完整Cookie，勿粘贴中文备注")
+        return False
 
 class Quark:
     def __init__(self, cookie):
@@ -187,7 +203,11 @@ def main():
         # 开始任务
         log = f"🙍🏻‍♂️ 第{i + 1}个账号"
         msg += log
-        # 登录（单账号异常不中断整体流程）
+        # 登录（先做格式预校验，单账号异常不中断整体流程）
+        if not check_cookie_format(QUARK_COOKIE[i], i + 1):
+            msg += "\n❌ 该账号cookie格式错误（含非ASCII字符），已跳过\n"
+            i += 1
+            continue
         try:
             log = Quark(QUARK_COOKIE[i]).do_sign()
         except Exception as e:

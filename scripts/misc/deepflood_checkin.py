@@ -244,7 +244,7 @@ if __name__ == "__main__":
     print(f"随机签到: {'启用' if random_signin else '禁用'}")
     
     if len(cookie_list) == 0:
-        print("未找到任何Cookie，请设置DEEPFLOOD_COOKIE环境变量")
+        print("❌ 未找到DEEPFLOOD_COOKIE环境变量或值为空，请在青龙面板中配置Cookie（多账号用换行分隔）")
         exit(1)
     
     # 为每个账号生成随机延迟时间

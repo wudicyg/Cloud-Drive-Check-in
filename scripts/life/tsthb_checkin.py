@@ -109,8 +109,10 @@ if 'tsthbck' in os.environ:
     tsthbck = [ck.strip() for ck in os.environ.get("tsthbck").replace('\r\n', '\n').split('\n') if ck.strip()]
     print(f'查找到{len(tsthbck)}个账号')
 else:
-    tsthbck =['']
-    print('无tsthbck变量')
+    tsthbck = []
+    print('❌ 未找到tsthbck环境变量，请在青龙面板中添加塔斯汀user-token（多账号用换行分隔）')
+if len(tsthbck) == 0:
+    print('❌ tsthbck变量未配置或值为空，无法执行签到')
 
 def qdsj(ck):
     headers = {'user-token':ck,'version':version,'channel':'1'}
@@ -149,7 +151,7 @@ def yx(ck):
 
     headers = {'user-token':ck,'version':version,'channel':'1'}
     dl = requests.get(url='https://sss-web.tastientech.com/api/intelligence/member/getMemberDetail',headers=headers).json()
-    if dl['code'] == 200:
+    if dl.get('code') == 200:
         myprint(f"账号：{dl['result']['phone']}登录成功")
         phone = dl['result']['phone']
         data = {"activityId":activityId,"memberName":"","memberPhone":phone}
@@ -161,6 +163,8 @@ def yx(ck):
                 myprint(f"签到情况：获得 {lq['result']['rewardInfoList'][0]['rewardName']}")
         else:
             myprint(f"签到情况：{lq['msg']}")
+    else:
+        myprint(f"❌ 登录失败（code={dl.get('code')}），tsthbck token可能已失效，请重新获取：{dl.get('msg', '')}")
 
 def main():
     """主程序入口"""
@@ -171,6 +175,10 @@ def main():
             print(f"🎲 随机延迟: {format_time_remaining(delay_seconds)}")
             wait_with_countdown(delay_seconds, "塔斯汀汉堡签到")
     
+    if not tsthbck:
+        myprint('❌ 未检测到有效账号，请先配置tsthbck环境变量')
+        return
+
     z = 1
     for ck in tsthbck:
         try:
@@ -181,7 +189,7 @@ def main():
             z = z + 1
         except Exception as e:
             print(e)
-            print('未知错误')
+            myprint(f'❌ 账号{z}执行异常，token可能无效或网络异常: {e}')
 
 if __name__ == '__main__':
     print('====================')
