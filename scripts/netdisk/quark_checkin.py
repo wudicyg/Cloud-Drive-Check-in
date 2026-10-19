@@ -198,6 +198,19 @@ def main():
 
     print("✅检测到共", len(QUARK_COOKIE), "个夸克账号\n")
 
+    if not QUARK_COOKIE:
+        print("❌ 未找到QUARK_COOKIE环境变量或值为空，请先在青龙面板配置夸克Cookie")
+        return
+
+    # 环境变量确认无误后再随机延迟
+    if random_signin:
+        delay_seconds = random.randint(0, max_random_delay)
+        if delay_seconds > 0:
+            signin_time = datetime.now() + timedelta(seconds=delay_seconds)
+            print(f"随机模式: 延迟 {format_time_remaining(delay_seconds)} 后签到")
+            print(f"预计签到时间: {signin_time.strftime('%H:%M:%S')}")
+            wait_with_countdown(delay_seconds)
+
     i = 0
     while i < len(QUARK_COOKIE):
         # 开始任务
@@ -232,15 +245,6 @@ def main():
 
 if __name__ == "__main__":
     print(f"==== 夸克网盘签到开始 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ====")
-    
-    # 随机延迟（可选）
-    if random_signin:
-        delay_seconds = random.randint(0, max_random_delay)
-        if delay_seconds > 0:
-            signin_time = datetime.now() + timedelta(seconds=delay_seconds)
-            print(f"随机模式: 延迟 {format_time_remaining(delay_seconds)} 后签到")
-            print(f"预计签到时间: {signin_time.strftime('%H:%M:%S')}")
-            wait_with_countdown(delay_seconds)
     
     print("----------夸克网盘开始尝试签到----------")
     main()

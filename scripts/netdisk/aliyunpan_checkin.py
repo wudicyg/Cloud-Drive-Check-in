@@ -778,16 +778,7 @@ def main():
     print(f"🔒 隐私保护模式: {'已启用' if privacy_mode else '已禁用'}")
     print(f"🔑 通知显示Token: {'是' if show_token_in_notification else '否'}")
     
-    # 随机延迟（整体延迟）
-    if random_signin:
-        delay_seconds = random.randint(0, max_random_delay)
-        if delay_seconds > 0:
-            signin_time = datetime.now() + timedelta(seconds=delay_seconds)
-            print(f"🎲 随机延迟: {format_time_remaining(delay_seconds)}")
-            print(f"⏰ 预计签到时间: {signin_time.strftime('%H:%M:%S')}")
-            wait_with_countdown(delay_seconds, "阿里云盘签到")
-    
-    # 获取refresh_token配置
+    # 获取refresh_token配置（先检测环境变量，再随机延迟）
     aliyun_tokens = os.getenv("ALIYUN_REFRESH_TOKEN", "")
     
     if not aliyun_tokens:
@@ -807,6 +798,15 @@ def main():
         print(error_msg)
         notify_user("阿里云盘签到失败", error_msg)
         return
+
+    # 随机延迟（环境变量确认无误后再等待）
+    if random_signin:
+        delay_seconds = random.randint(0, max_random_delay)
+        if delay_seconds > 0:
+            signin_time = datetime.now() + timedelta(seconds=delay_seconds)
+            print(f"🎲 随机延迟: {format_time_remaining(delay_seconds)}")
+            print(f"⏰ 预计签到时间: {signin_time.strftime('%H:%M:%S')}")
+            wait_with_countdown(delay_seconds, "阿里云盘签到")
 
     # 支持多账号（使用换行符分割，支持token中包含&符号）
     tokens = [token.strip() for token in aliyun_tokens.replace('\r\n', '\n').split('\n') if token.strip()]

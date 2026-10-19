@@ -693,19 +693,18 @@ if __name__ == '__main__':
     
     print(f"==== 顺丰速运签到开始 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ====")
     
-    # 随机延迟（整体延迟）
-    if random_signin:
-        delay_seconds = random.randint(0, max_random_delay)
-        if delay_seconds > 0:
-            signin_time = datetime.now() + timedelta(seconds=delay_seconds)
-            print(f"🎲 随机模式: 延迟 {format_time_remaining(delay_seconds)} 后开始")
-            print(f"⏰ 预计开始时间: {signin_time.strftime('%H:%M:%S')}")
-            wait_with_countdown(delay_seconds, "顺丰签到")
-    
     token = os.getenv(ENV_NAME)
     tokens = [t.strip() for t in token.split('\n') if t.strip()] if token else []
     if tokens:
         Log(f"🚚 共获取到{len(tokens)}个账号")
+        # 环境变量确认无误后再随机延迟
+        if random_signin:
+            delay_seconds = random.randint(0, max_random_delay)
+            if delay_seconds > 0:
+                signin_time = datetime.now() + timedelta(seconds=delay_seconds)
+                print(f"🎲 随机模式: 延迟 {format_time_remaining(delay_seconds)} 后开始")
+                print(f"⏰ 预计开始时间: {signin_time.strftime('%H:%M:%S')}")
+                wait_with_countdown(delay_seconds, "顺丰签到")
         for index, infos in enumerate(tokens):
             Log(f"==================================\n🚚 处理账号{index + 1}")
             try:

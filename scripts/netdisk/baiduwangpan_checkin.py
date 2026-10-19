@@ -355,16 +355,7 @@ def main():
     # 显示配置状态
     print(f"🔒 隐私保护模式: {'已启用' if privacy_mode else '已禁用'}")
     
-    # 随机延迟（整体延迟）
-    if random_signin:
-        delay_seconds = random.randint(0, max_random_delay)
-        if delay_seconds > 0:
-            signin_time = datetime.now() + timedelta(seconds=delay_seconds)
-            print(f"🎲 随机延迟: {format_time_remaining(delay_seconds)}")
-            print(f"⏰ 预计签到时间: {signin_time.strftime('%H:%M:%S')}")
-            wait_with_countdown(delay_seconds, "百度网盘签到")
-    
-    # 获取Cookie配置
+    # 获取Cookie配置（先检测环境变量，再随机延迟）
     baidu_cookies = BAIDU_COOKIE
     
     if not baidu_cookies:
@@ -383,6 +374,15 @@ def main():
         print(error_msg)
         notify_user("百度网盘签到失败", error_msg)
         return
+
+    # 随机延迟（环境变量确认无误后再等待）
+    if random_signin:
+        delay_seconds = random.randint(0, max_random_delay)
+        if delay_seconds > 0:
+            signin_time = datetime.now() + timedelta(seconds=delay_seconds)
+            print(f"🎲 随机延迟: {format_time_remaining(delay_seconds)}")
+            print(f"⏰ 预计签到时间: {signin_time.strftime('%H:%M:%S')}")
+            wait_with_countdown(delay_seconds, "百度网盘签到")
 
     # 支持多账号（用换行分隔）
     if '\n' in baidu_cookies:

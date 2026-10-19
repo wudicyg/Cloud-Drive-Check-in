@@ -310,16 +310,7 @@ def main():
     """主程序入口"""
     print(f"==== 什么值得买签到开始 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ====")
     
-    # 随机延迟（整体延迟）
-    if random_signin:
-        delay_seconds = random.randint(0, max_random_delay)
-        if delay_seconds > 0:
-            signin_time = datetime.now() + timedelta(seconds=delay_seconds)
-            print(f"🎲 随机模式: 延迟 {format_time_remaining(delay_seconds)} 后开始")
-            print(f"⏰ 预计开始时间: {signin_time.strftime('%H:%M:%S')}")
-            wait_with_countdown(delay_seconds, "什么值得买签到")
-
-    # 获取环境变量
+    # 获取环境变量（先检测环境变量，再随机延迟）
     SMZDM_COOKIE_env = os.getenv("SMZDM_COOKIE")
     
     if not SMZDM_COOKIE_env:
@@ -327,6 +318,15 @@ def main():
         print(error_msg)
         notify_user("什么值得买签到失败", error_msg)
         return
+
+    # 随机延迟（环境变量确认无误后再等待）
+    if random_signin:
+        delay_seconds = random.randint(0, max_random_delay)
+        if delay_seconds > 0:
+            signin_time = datetime.now() + timedelta(seconds=delay_seconds)
+            print(f"🎲 随机模式: 延迟 {format_time_remaining(delay_seconds)} 后开始")
+            print(f"⏰ 预计开始时间: {signin_time.strftime('%H:%M:%S')}")
+            wait_with_countdown(delay_seconds, "什么值得买签到")
 
     # 解析多账号Cookie（使用换行符分割，支持Cookie中包含&符号）
     SMZDM_COOKIEs = [c.strip() for c in SMZDM_COOKIE_env.replace('\r\n', '\n').split('\n') if c.strip()]

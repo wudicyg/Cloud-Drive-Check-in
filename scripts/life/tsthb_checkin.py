@@ -168,7 +168,11 @@ def yx(ck):
 
 def main():
     """主程序入口"""
-    # 随机延迟（整体延迟，在签到开始前执行）
+    if not tsthbck:
+        myprint('❌ 未检测到有效账号，请先配置tsthbck环境变量')
+        return
+
+    # 环境变量确认无误后再随机延迟
     if random_signin:
         delay_seconds = random.randint(0, max_random_delay)
         if delay_seconds > 0:
@@ -176,10 +180,6 @@ def main():
             print(f"🎲 随机延迟: {format_time_remaining(delay_seconds)}")
             print(f"⏰ 预计签到时间: {signin_time.strftime('%H:%M:%S')}")
             wait_with_countdown(delay_seconds, "塔斯汀汉堡签到")
-    
-    if not tsthbck:
-        myprint('❌ 未检测到有效账号，请先配置tsthbck环境变量')
-        return
 
     z = 1
     for ck in tsthbck:
