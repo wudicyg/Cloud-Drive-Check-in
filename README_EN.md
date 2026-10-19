@@ -1,55 +1,56 @@
-# QL Script Hub
+# Check-in Scripts
 
-> 🚀 Personal QingLong script hub - one-stop solution for check-ins and monitoring
+> A collection of Python check-in scripts for the QingLong panel, covering cloud drives, forums, life/services and more.
 
-[中文说明](README.md) | English
+[English] | [中文](README.md)
 
-[![GitHub stars](https://img.shields.io/github/stars/agluo/ql-script-hub?style=flat-square)](https://github.com/agluo/ql-script-hub/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/agluo/ql-script-hub?style=flat-square)](https://github.com/agluo/ql-script-hub/network)
-[![GitHub issues](https://img.shields.io/github/issues/agluo/ql-script-hub?style=flat-square)](https://github.com/agluo/ql-script-hub/issues)
-[![License](https://img.shields.io/github/license/agluo/ql-script-hub?style=flat-square)](https://github.com/agluo/ql-script-hub/blob/main/LICENSE)
+## Introduction
 
-## 📋 Overview
+This repository collects and maintains a set of Python check-in scripts for the QingLong panel. They share a consistent style and hardened error handling, and can be deployed directly. Each script runs independently, reads accounts from environment variables, and supports multiple accounts with randomized delays.
 
-QL Script Hub is a script collection built for QingLong Panel, providing automation for daily check-ins, monitoring, and similar repetitive tasks. The scripts are intended to be easy to deploy and maintain.
+## Features
 
-## ✨ Features
+- 🎯 **Multi-platform** — cloud drives, forums/communities, life/services, e-commerce, etc.
+- 🔧 **Unified config** — every script reads accounts from environment variables with a consistent format
+- 🛡️ **Hardened** — per-account error isolation, automatic fallback on endpoint failure, graceful degradation for optional dependencies
+- 📝 **Documented** — credential acquisition and format for each platform are described below and in [DEPLOY.md](./DEPLOY.md)
 
-- 🎯 **Diverse scripts** - Covers check-ins, notifications, and other automation scenarios
-- 🔧 **Easy configuration** - Unified environment-variable based setup
-- 📦 **Modular design** - Clear file structure for maintenance and extension
-- 🛡️ **Reliable** - Scripts are organized for practical day-to-day usage
-- 📝 **Documented** - Includes setup notes and parameter descriptions
-- 🔄 **Continuously updated** - Easy to expand with more services over time
+## Directory Structure
 
-## 📁 Project Structure
-
-```text
-ql-script-hub/
-├── README.md                    # Chinese README
-├── README_EN.md                 # English README
-├── LICENSE                      # License
-├── aliyunpan_checkin.py         # Aliyun Drive check-in
-├── baiduwangpan_checkin.py      # Baidu Netdisk check-in
-├── CDRail.py                    # Chengdu Metro sign-in
-├── deepflood_checkin.py         # Deepflood check-in
-├── enshan_checkin.py            # Enshan forum check-in
-├── HiFiti_checkin.py            # HiFiTi / HiFiHi check-in
-├── ikuuu_checkin.py             # Ikuuu check-in
-├── leaflow_checkin.py           # Leaflow check-in
-├── nga_checkin.py               # NGA forum check-in
-├── nodeseek_checkin.py          # NodeSeek check-in
-├── passnat_checkin.py           # PassNAT check-in
-├── quark_signin.py              # Quark Drive sign-in
-├── SFSU_checkin.py              # SF Express sign-in
-├── SMZDM_checkin.py             # SMZDM sign-in
-├── tieba_checkin.py             # Baidu Tieba sign-in
-├── tsthb_checkin.py             # Tastintin sign-in
-├── ty_netdisk_checkin.py        # Tianyi Cloud Drive sign-in
-└── archive/                     # Legacy versions (reference only, not scheduled)
+```
+Cloud-Drive-Check-in/
+├── LICENSE                  # Open-source license
+├── README.md                # Chinese documentation
+├── README_EN.md             # English documentation
+├── DEPLOY.md                # Deployment & configuration guide
+└── scripts/                 # All check-in scripts (categorized)
+    ├── netdisk/             # Cloud drives
+    │   ├── aliyunpan_checkin.py
+    │   ├── baiduwangpan_checkin.py
+    │   ├── quark_checkin.py
+    │   └── ty_netdisk_checkin.py
+    ├── forum/               # Forums / communities
+    │   ├── enshan_checkin.py
+    │   ├── nodeseek_checkin.py
+    │   ├── ikuuu_checkin.py
+    │   ├── nga_checkin.py
+    │   ├── hifiti_checkin.py
+    │   ├── leaflow_checkin.py
+    │   └── tieba_checkin.py
+    ├── life/                # Life / travel / e-commerce
+    │   ├── cdrail_checkin.py
+    │   ├── sfsu_checkin.py
+    │   ├── tsthb_checkin.py
+    │   └── passnat_checkin.py
+    ├── misc/                # Others
+    │   ├── deepflood_checkin.py
+    │   └── smzdm_checkin.py
+    └── archive/             # Legacy versions (reference only, not scheduled)
 ```
 
-## 🚀 Quick Start
+## Quick Start
+
+> 📌 Deployment flow, per-platform credential acquisition, formats and security notes: see **[DEPLOY.md](./DEPLOY.md)**.
 
 ### Requirements
 
@@ -68,284 +69,274 @@ curl_cffi
 
 ### Installation
 
-1. **Pull the repository**
-
+1. **Get the repository**
    ```bash
-   # Add this repository in QingLong subscription management
-   # Subscription URL: https://github.com/agluo/ql-script-hub.git
+   # Option A: Git clone
+   git clone https://github.com/wudicyg/Cloud-Drive-Check-in.git
+
+   # Option B: QingLong Panel "Subscription" — add subscription
+   # URL: https://github.com/wudicyg/Cloud-Drive-Check-in.git
    ```
+2. **(Optional) Configure notifications**
+   Notifications use QingLong's built-in `notify.py`, supporting ServerChan, Push+, DingTalk, Bark, Telegram, etc.
+   Related environment variables (e.g. `TG_BOT_TOKEN`, `PUSH_KEY`, `DD_BOT_TOKEN`, `BARK_PUSH`) are configured per the QingLong documentation. When not configured, scripts only print logs and do not push.
+3. **Configure environment variables**
+   Add the variables for each platform (see the "Platform Configuration" tables below) in QingLong's environment variable page.
+4. **Create scheduled tasks**
+   Create a cron task for each script you want to use, pointing the command at the file, e.g.:
+   `task /ql/data/scripts/Cloud-Drive-Check-in/scripts/netdisk/aliyunpan_checkin.py`
 
-   <img width="774" height="1112" alt="image" src="https://github.com/user-attachments/assets/de6cf07f-7af2-42b9-8321-c2ccc542820b" />
-
-2. **Configure environment variables**
-
-| Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `TG_BOT_TOKEN` | Telegram bot token | Recommended | `1234567890:AAG9rt-6RDaaX0HBLZQq0laNOh898iFYaRQ` | See instructions below |
-| `TG_USER_ID` | Telegram user ID | Recommended | `1434078534` | See instructions below |
-| `PUSH_KEY` | ServerChan push key | Optional | `SCTxxxxxxxxxxxxxxxxxxxxx` | For WeChat push via `sct.ftqq.com` |
-| `PUSH_PLUS_TOKEN` | Push+ token | Optional | `xxxxxxxxxxxxxxxxxx` | For WeChat push via `pushplus.plus` |
-| `DD_BOT_TOKEN` | DingTalk bot token | Optional | `xxxxxxxxxxxxxxxxxx` | DingTalk group bot |
-| `DD_BOT_SECRET` | DingTalk bot secret | Optional | `xxxxxxxxxxxxxxxxxx` | Optional bot signing secret |
-| `BARK_PUSH` | Bark push URL | Optional | `https://api.day.app/your_key/` | Bark push for iOS |
+### Platform Configuration
 
 #### 🏔️ Enshan Forum
 
 | Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `enshan_cookie` | Enshan forum cookie | **Required** | `full cookie string` | Single-account cookie |
+|--------|-------------|----------|---------|-------|
+| `enshan_cookie` | Enshan forum cookie | **Required** | `full cookie string` | Single account cookie (note: lowercase name) |
 
 #### 📱 NodeSeek
 
 | Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `NODESEEK_COOKIE` | NodeSeek cookie | **Required** | `cookie1\ncookie2\ncookie3` | Separate multiple accounts with new lines |
-| `NS_RANDOM` | Random sign-in parameter | Optional | `true` | Usually no need to change |
+|--------|-------------|----------|---------|-------|
+| `NODESEEK_COOKIE` | NodeSeek website cookie | **Required** | `cookie1&cookie2&cookie3` | Separate multiple accounts with `&` |
+| `NS_RANDOM` | Random sign-in param | Optional | `true` | Default; usually no change needed |
 
 #### ☁️ Quark Drive
 
 | Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `QUARK_COOKIE` | Quark Drive cookie | **Required** | `cookie1\ncookie2` | Separate multiple accounts with new lines |
+|--------|-------------|----------|---------|-------|
+| `QUARK_COOKIE` | Quark Drive cookie | **Required** | `cookie1&&cookie2` | Separate multiple accounts with `&&` or newline |
 
 #### 🚇 Chengdu Metro
 
 | Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `CDRAIL_DATA` | Chengdu Metro request data extracted from captured headers | **Required** | `{"token":"xxx","app-token":"yyy","Cookie":"zzz"}` | Supports `JSON`; separate multiple accounts with new lines |
+|--------|-------------|----------|---------|-------|
+| `CDRAIL_DATA` | Chengdu Metro request data (from captured headers) | **Required** | `{"token":"xxx","app-token":"yyy","Cookie":"zzz"}` | JSON or `token=...&app-token=...&cookie=...`; multiple accounts with newline or `@` |
 
-`CDRAIL_DATA` should include the following fields, preferably copied directly from the captured request headers:
+`CDRAIL_DATA` fields (recommended to copy directly from captured request headers):
 
-| Field | Required | Description |
-|------|----------|------|
-| `token` | **Required** | The `token` value from request headers |
-| `app-token` | **Required** | The `app-token` value from request headers |
-| `Cookie` / `cookie` | **Required** | Logged-in cookie; the script handles case differences automatically |
-| `deviceId` / `device-id` | Recommended | Device identifier; the repository default is only a placeholder, so using your own captured device ID is recommended |
-
-Example formats:
+| Field | Required | Notes |
+|-------|----------|-------|
+| `token` | **Required** | `token` from request header |
+| `app-token` | **Required** | `app-token` from request header |
+| `Cookie` / `cookie` | **Required** | Logged-in cookie (case handled automatically) |
+| `deviceId` / `device-id` | Suggested | Device id; prefer your own captured value |
 
 ```bash
-# Single account in JSON format (recommended)
+# JSON single account (recommended)
 export CDRAIL_DATA='{"token":"xxx","app-token":"yyy","Cookie":"zzz","deviceId":"xxx-xxx"}'
 
-# Single account in querystring format
+# querystring single account
 export CDRAIL_DATA='token=xxx&app-token=yyy&cookie=zzz&deviceId=xxx-xxx'
 
-# Multiple accounts: separated by new lines or `@`
+# multiple accounts: newline or @ separated
 export CDRAIL_DATA='{"token":"t1","app-token":"a1","Cookie":"c1","deviceId":"d1"}
 {"token":"t2","app-token":"a2","Cookie":"c2","deviceId":"d2"}'
 ```
 
+Optional variables:
+
+| Variable | Description | Default | Notes |
+|--------|-------------|---------|-------|
+| `TIMEOUT` | Per-request timeout (s) | `15` | Increase if network is slow |
+| `MAX_RETRIES` | 5xx auto-retry count | `3` | Exponential backoff |
+
 #### 📦 SF Express
 
 | Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `sfsyUrl` | SF Express login URL | **Required** | `https://mcs-mimp...` | Capture from network traffic, one per line for multiple accounts |
+|--------|-------------|----------|---------|-------|
+| `sfsyUrl` | SF Express login URL | **Required** | `https://mcs-mimp...` | Capture from traffic; newline for multiple |
 
 #### Baidu Tieba
 
 | Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `TIEBA_COOKIE` | Baidu Tieba cookie | **Required** | `BDUSS=xxxxxx; STOKEN=xxxxx...` | Full cookie string, one account per line |
+|--------|-------------|----------|---------|-------|
+| `TIEBA_COOKIE` | Baidu Tieba cookie | **Required** | `BDUSS=xxxxxx; STOKEN=xxxxx...` | Full cookie string; newline for multiple |
 
 #### ☁️ Aliyun Drive
 
 | Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `ALIYUN_REFRESH_TOKEN` | Aliyun Drive `refresh_token` | **Required** | `crsh166bdfde4751a4c0...` | Separate multiple accounts with new lines |
-| `AUTO_UPDATE_TOKEN` | Auto update token | Optional | `true` | Default is `true` |
-| `PRIVACY_MODE` | Privacy mode | Optional | `true` | Default is `true`, masks sensitive values |
+|--------|-------------|----------|---------|-------|
+| `ALIYUN_REFRESH_TOKEN` | Aliyun Drive refresh_token | **Required** | `crsh166bdfde4751a4c0...` | Newline for multiple accounts |
+| `AUTO_UPDATE_TOKEN` | Auto-update token | Optional | `true` | Default `true`, maintains token automatically |
+| `PRIVACY_MODE` | Privacy mode | Optional | `true` | Default `true`, masks sensitive info |
 
 #### 🛒 SMZDM
 
 | Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `SMZDM_COOKIE` | SMZDM cookie | **Required** | `__ckguid==xxxxx; device_id=xxxxx...` | Full cookie string, one account per line |
+|--------|-------------|----------|---------|-------|
+| `SMZDM_COOKIE` | SMZDM cookie | **Required** | `__ckguid==xxxxx; device_id=xxxxx...` | Full cookie; newline for multiple |
+
+#### 🍔 Tastientech (TSTHB)
+
+| Variable | Description | Required | Example | Notes |
+|--------|-------------|----------|---------|-------|
+| `tsthbck` | Tastientech user-token | **Required** | `xxxxx` | Capture from WeChat mini-program; newline for multiple |
+
+#### 🎶 HiFiTi / HiFiHi
+
+| Variable | Description | Required | Example | Notes |
+|--------|-------------|----------|---------|-------|
+| `HiFiTi_COOKIE` | HiFiTi cookie | Optional | `xxxxx` | Multiple accounts, newline separated |
+| `HIFIHI_COOKIE` | HiFiHi cookie | Optional | `xxxxx` | Multiple accounts, newline separated |
 
 #### ☁️ Baidu Netdisk
 
 | Variable | Description | Example |
-|--------|------|------|
+|--------|-------------|---------|
 | `BAIDU_COOKIE` | Website cookie | `BDUSS=xxx; STOKEN=xxx...` |
 | `PRIVACY_MODE` | Privacy mode | `true` |
 
-#### 📡 Ikuuu
+#### 📡 ikuuu
 
 | Variable | Description | Example |
-|--------|------|------|
+|--------|-------------|---------|
 | `IKUUU_EMAIL` | Login email | `user@example.com` |
 | `IKUUU_PASSWD` | Login password | `password123` |
+| `IKUUU_BASE` | Custom site URL | `https://ikuuu.nl` | Optional; default probes `ikuuu.nl` → `ikuuu.de` → `ikuuu.la` in order |
+
+> Note: ikuuu domains change from time to time; the script probes candidate domains automatically and switches when one fails.
 
 #### ☁️ Tianyi Cloud Drive
 
-| Variable | Description | Example |
-|--------|------|------|
-| `TY_USERNAME` | Login phone number | `13812345678` |
-| `TY_PASSWORD` | Login password | `password1` |
+| Variable | Description | Example | Notes |
+|--------|-------------|---------|-------|
+| `TY_USERNAME` | Login phone number | `13812345678\n13987654321` | Newline for multiple |
+| `TY_PASSWORD` | Login password | `password1\npassword2` | |
 
 #### 🎮 NGA Forum
 
 | Variable | Description | Example |
-|--------|------|------|
-| `NGA_CREDENTIALS` | UID and AccessToken | `12345678,abcdef...` |
+|--------|-------------|---------|
+| `NGA_CREDENTIALS` | UID,AccessToken | `12345678,abcdef...` |
+| `NGA_UA` | Custom User-Agent | `Nga_Official/90409` | Optional, default `Nga_Official/90409` |
 
-#### 📱 Deepflood
-
-| Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `DEEPFLOOD_COOKIE` | Deepflood website cookie | **Required** | `cookie1\ncookie2\ncookie3` | Separate multiple accounts with new lines |
-| `DF_RANDOM` / `NS_RANDOM` | Random sign-in parameter | Optional | `true` | Usually no need to change; both variable names are accepted |
-
-#### ☁️ Leaflow
+#### 📱 deepflood
 
 | Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `LEAFLOW_COOKIE` | Leaflow website cookie | **Required** | `cookie` | Separate multiple accounts with new lines |
-| `LEAFLOW_BASE` | Custom site URL | Optional | `https://checkin.leaflow.net` | Tries `checkin.leaflow.net` then `console.leaflow.net` by default |
+|--------|-------------|----------|---------|-------|
+| `DEEPFLOOD_COOKIE` | DEEPFLOOD website cookie | **Required** | `cookie1&cookie2&cookie3` | Separate multiple accounts with `&` |
+| `DF_RANDOM` / `NS_RANDOM` | Random sign-in param | Optional | `true` | Default; both names accepted |
 
-> ⚠️ Leaflow has migrated: the old check-in site `checkin.leaflow.net` now redirects to the
+#### ☁️ leaflow
+
+| Variable | Description | Required | Example | Notes |
+|--------|-------------|----------|---------|-------|
+| `LEAFLOW_COOKIE` | leaflow website cookie | **Required** | `cookie` | Newline for multiple |
+| `LEAFLOW_BASE` | Custom site URL | Optional | `https://checkin.leaflow.net` | Default tries `checkin.leaflow.net` then `console.leaflow.net` |
+
+> ⚠️ **leaflow has migrated**: the old check-in site `checkin.leaflow.net` now redirects to the
 > new console at `console.leaflow.net`. If you keep seeing "Cookie expired / all retries failed",
 > log in again and copy the **new console cookie** from your browser dev tools.
 
-#### ⏰ Randomization Settings (shared by all scripts)
+#### 🌐 PassNAT
 
 | Variable | Description | Required | Example | Notes |
-|--------|------|----------|--------|------|
-| `RANDOM_SIGNIN` | Enable random sign-in | Optional | `true` | `true` to enable, `false` to disable |
-| `MAX_RANDOM_DELAY` | Random delay window in seconds | Optional | `3600` | `3600` = 1 hour, `1800` = 30 minutes |
+|--------|-------------|----------|---------|-------|
+| `PASSNAT_SK` | PassNAT API key | **Required** | `sk_xxxxx` | Newline for multiple |
 
----
+#### ⏰ Randomization (shared by all scripts)
 
-## 🔧 How to Obtain Required Values
+| Variable | Description | Required | Example | Notes |
+|--------|-------------|----------|---------|-------|
+| `RANDOM_SIGNIN` | Enable randomized sign-in | Optional | `true` | `true` enables, `false` disables |
+| `MAX_RANDOM_DELAY` | Random delay window (s) | Optional | `3600` | `3600`=1h, `1800`=30m |
 
-### 📱 Telegram Setup
-1. **Create a bot**: Chat with [@BotFather](https://t.me/botfather) and send `/newbot`
-2. **Get the token**: After creation, BotFather returns your `TG_BOT_TOKEN`
-3. **Get user ID**: Chat with [@userinfobot](https://t.me/userinfobot) to get `TG_USER_ID`
+## Credential Acquisition
 
-### 🍪 Cookie / Credential Collection
-
-#### Enshan forum cookie
+#### Enshan Forum Cookie
 1. Visit [Enshan Forum](https://www.right.com.cn/FORUM/) and sign in
-2. Open developer tools with `F12` → `Network` → refresh the page
-3. Copy the full `Cookie` value from request headers
+2. F12 → Network → refresh the page
+3. Copy the full `Cookie` from the request headers
 
-#### NodeSeek cookie
+#### NodeSeek Cookie
 1. Visit [nodeseek.com](https://www.nodeseek.com) and sign in
-2. Open developer tools with `F12` → `Network` → refresh the page
-3. Copy the full `Cookie` value from request headers
+2. F12 → Network → refresh
+3. Copy the full `Cookie` from request headers
 
-#### Deepflood cookie
+#### Deepflood Cookie
 1. Visit [deepflood.com](https://www.deepflood.com) and sign in
-2. Open developer tools with `F12` → `Network` → refresh the page
-3. Copy the full `Cookie` value from request headers
+2. F12 → Network → refresh
+3. Copy the full `Cookie` from request headers
 
-#### Quark Drive cookie
+#### Quark Drive Cookie
 1. Visit [Quark Drive](https://pan.quark.cn/) and sign in
-2. Open developer tools with `F12` → `Network` → refresh the page
-3. Copy the full `Cookie` value from request headers
+2. F12 → Network → refresh
+3. Copy the full `Cookie` from request headers
 
-#### SF Express `sfsyUrl`
-1. Bind WeChat in the SF Express app, then send "顺丰" to the bot
-2. Open the mini program or app → My → Points, and capture one of these URLs:
+#### SF Express sfsyUrl
+1. Bind WeChat in SF app, then add the bot and send "顺丰"
+2. Open the mini-program or app → Me → Points, capture one of these URLs:
    - `https://mcs-mimp-web.sf-express.com/mcs-mimp/share/weChat/shareGiftReceiveRedirect`
    - `https://mcs-mimp-web.sf-express.com/mcs-mimp/share/app/shareRedirect`
-3. Encode the captured URL using a tool such as [URL Encoder](https://www.toolhelper.cn/EncodeDecode/Url)
+3. URL-encode the captured URL with a tool such as [URL Encoder](https://www.toolhelper.cn/EncodeDecode/Url)
 
-#### Baidu Tieba cookie
+#### Baidu Tieba Cookie
 1. Visit [tieba.baidu.com](https://tieba.baidu.com) and sign in
-2. Open developer tools with `F12` → `Network` → refresh the page
-3. Copy the full `Cookie` value from request headers
-4. Make sure the cookie contains `BDUSS`
+2. F12 → Network → refresh
+3. Copy the full `Cookie`, ensure it contains `BDUSS`
 
-#### Aliyun Drive `refresh_token`
+#### Aliyun Drive refresh_token
 1. Visit [Aliyun Drive Web](https://www.aliyundrive.com/) and sign in
-2. Press `F12` → open the `Application` tab
-3. Find `Local Storage` → `https://www.aliyundrive.com`
-4. Locate `token` and copy the `refresh_token` value
+2. F12 → `Application` tab
+3. Local Storage → `https://www.aliyundrive.com`
+4. Find `token`, copy the `refresh_token` value
 
-#### SMZDM cookie
+#### SMZDM Cookie
 1. Visit [SMZDM](https://www.smzdm.com/) and sign in
-2. Press `F12` → open the `Network` tab
-3. Refresh the page and open any request's `Request Headers`
+2. F12 → `Network` tab
+3. Refresh, find any request's `Request Headers`
 4. Copy the full `Cookie` value
 
-#### Baidu Netdisk cookie
+#### Baidu Netdisk Cookie
 1. Visit [Baidu Netdisk](https://pan.baidu.com/) and sign in
-2. Press `F12` → `Network` → copy the cookie
+2. F12 → Network → copy Cookie
 
-#### Ikuuu configuration
-1. Add `IKUUU_EMAIL` in QingLong Panel
-2. Add `IKUUU_PASSWD` in QingLong Panel
-3. Separate multiple accounts with commas, e.g. `email1,email2`
-4. Keep password order aligned with email order
+#### ikuuu Configuration
+1. Add env `IKUUU_EMAIL` (email) in QingLong
+2. Add env `IKUUU_PASSWD` (password)
+3. Multiple accounts comma-separated: `email1,email2`; password order matches email order
 
-#### Tianyi Cloud Drive configuration
-1. Visit [Tianyi Cloud Drive](https://e.dlife.cn/index.do) and disable device lock
-2. Add `TY_USERNAME` in QingLong Panel
-3. Add `TY_PASSWD` in QingLong Panel
+#### Tianyi Cloud Drive Configuration
+1. Visit [Tianyi Cloud Drive](https://e.dlife.cn/index.do) and sign in, disable device lock
+2. Add env `TY_USERNAME` (phone number)
+3. Add env `TY_PASSWORD` (password)
 
-#### Leaflow configuration
-1. Visit [leaflow](https://console.leaflow.net/) and sign in
-2. Open developer tools with `F12` → Network → refresh the page
-3. Copy the full `Cookie` header from any authenticated request (the new console uses session
-   cookies such as `leaflow_session` / `XSRF-TOKEN`; the old `PHPSESSID`-based site has been retired)
-4. Store it in `LEAFLOW_COOKIE`
+#### leaflow Configuration
+1. Visit the new console [console.leaflow.net](https://console.leaflow.net/) and sign in
+2. F12 → Network → refresh
+3. Copy the full `Cookie` from any authenticated request (new console uses `leaflow_session`, `XSRF-TOKEN`, etc.; the old `PHPSESSID` method is retired)
+4. Set `LEAFLOW_COOKIE`
+5. Use `LEAFLOW_BASE` for a custom site URL if needed
 
-#### NGA forum configuration
-1. Install a packet capture tool with HTTPS decryption enabled and trust its certificate. Android: HTTP Canary, HttpToolkit, mitmproxy, Charles; iOS: Stream, Charles
-2. Route the phone network through the capture tool (or use its local VPN / proxy mode)
-3. Open the official NGA app, make sure you are signed in, then perform any action to trigger a request
-4. Find the POST request sent to `https://ngabbs.com/nuke.php`
-5. Open the request body (`Content-Type` is usually `application/x-www-form-urlencoded`) and copy: `access_uid=yourUID` and `access_token=long_string`
-6. Combine them as `UID,AccessToken` and store them in `NGA_CREDENTIALS`
-   - Single account: `123456,abcdefg`
-   - Multiple accounts: `123456,abcdefg&234567,hijklmn`
+#### PassNAT API Key
+1. Visit [PassNAT](https://www.passnat.com/) and sign in
+2. Profile → API Key
+3. Generate or copy an existing key
+4. Set `PASSNAT_SK` (format `SK_xxxxx`); newline for multiple
 
----
+#### NGA Forum Configuration
+1. Install a traffic capture tool with HTTPS decryption (Android: HTTP Canary, HttpToolkit, mitmproxy, Charles; iOS: Stream, Charles) and trust its CA
+2. Point the phone's proxy to the capture tool (or use its VPN/proxy mode)
+3. Open the NGA app (logged in) and trigger a request (e.g. open home / check-in)
+4. Find the POST request to `https://ngabbs.com/nuke.php`
+5. In its request body (`application/x-www-form-urlencoded`), copy: `access_uid`=your UID; `access_token`=long string
+6. Set `NGA_CREDENTIALS` as `UID,AccessToken`
+   Single: `123456,abcdefg`
+   Multiple (newline):
+   ```
+   123456,abcdefg
+   234567,hijklmn
+   ```
 
-## 📝 Configuration Example
+## Configuration Example
 
 ```bash
-# Notifications (Telegram recommended)
-TG_BOT_TOKEN=1234567890:AAG9rt-6RDaaX0HBLZQq0laNOh898iFYaRQ
-TG_USER_ID=1434078534
-
-# Randomization settings (optional)
+# Randomization (optional)
 RANDOM_SIGNIN=true
 MAX_RANDOM_DELAY=3600
 ```
 
----
+## License
 
-## 🤝 Contributing
-
-Contributions and suggestions are welcome.
-
-1. Fork this repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 Disclaimer
-
-- This project is for learning and personal communication only
-- The author is not responsible for any issues caused by using this project
-- Please comply with the target websites' terms of service and local laws
-
-## 📞 Contact
-
-- GitHub: [@agluo](https://github.com/agluo)
-- Issues: [Project issue tracker](https://github.com/agluo/ql-script-hub/issues)
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
-
-## ⭐ Star History
-
-If this project helps you, a star is appreciated ⭐️
-
-[![Star History Chart](https://api.star-history.com/svg?repos=agluo/ql-script-hub&type=Date)](https://star-history.com/#agluo/ql-script-hub&Date)
+Released under the [MIT License](LICENSE).

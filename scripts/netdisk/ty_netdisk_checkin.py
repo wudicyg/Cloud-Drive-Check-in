@@ -3,7 +3,6 @@
 """
 cron "1 16 * * *" script-path=xxx.py,tag=匹配cron用
 new Env('天翼云盘签到')
-改编自作者：https://www.52pojie.cn/thread-1231190-1-1.html
 """
 
 # ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------

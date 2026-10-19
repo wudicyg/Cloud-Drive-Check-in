@@ -1,6 +1,6 @@
 # 部署指南（青龙面板）
 
-本指南说明如何将本项目（`ql-script-hub`）部署到青龙面板并正确配置各平台签到任务。
+本指南说明如何将本项目（`Cloud-Drive-Check-in`）部署到青龙面板并正确配置各平台签到任务。
 
 > 核心结论：**脚本可以直接部署运行，无需预先准备任何凭证**。缺少某平台凭证时，该平台会安全"空跑"（打印提示并退出），不影响其余平台与面板稳定性。要真正完成签到，再按需补齐对应凭证即可。
 
@@ -67,7 +67,8 @@
 ## 四、部署到青龙的具体步骤
 
 1. **上传脚本**
-   将仓库根目录下的全部 `.py`（**不要**包含 `archive/` 历史版本）上传到青龙，例如 `/ql/data/scripts/ql-script-hub/`。
+   将仓库克隆/上传到青龙，例如 `/ql/data/scripts/Cloud-Drive-Check-in/`。
+   脚本按类别位于 `scripts/netdisk/`、`scripts/forum/`、`scripts/life/`、`scripts/misc/` 下（`scripts/archive/` 为历史版本，不参与运行）。
 
 2. **安装依赖**
    `依赖管理 → 新建依赖 → 类型：Python3 → 名称` 填写：
@@ -85,8 +86,8 @@
 4. **创建定时任务**
    `定时任务 → 新建`：
    - **名称**：如 `阿里云盘签到`
-   - **命令**：`task /ql/data/scripts/ql-script-hub/aliyunpan_checkin.py`
-     （或直接 `python3 /ql/data/scripts/ql-script-hub/aliyunpan_checkin.py`）
+   - **命令**：`task /ql/data/scripts/Cloud-Drive-Check-in/scripts/netdisk/aliyunpan_checkin.py`
+     （或直接 `python3 /ql/data/scripts/Cloud-Drive-Check-in/scripts/netdisk/aliyunpan_checkin.py`）
    - **定时规则**：如 `0 6 * * *`（每天 06:00）
    - 对每个要使用的脚本重复建立一条任务。
 

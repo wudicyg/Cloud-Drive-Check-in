@@ -3,10 +3,6 @@
 """
 cron: 0 21 * * *
 new Env('ikuuu签到')
-
-原始脚本来源: https://github.com/bighammer-link/jichang_dailycheckin
-本脚本基于原作者的代码进行了适配和优化，以符合本脚本库的统一标准
-感谢原作者的贡献！
 """
 
 # ---------------- Windows 控制台编码兼容（青龙 Linux 环境下为空操作）----------------
